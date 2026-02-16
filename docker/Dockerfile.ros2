@@ -1,0 +1,31 @@
+# ROS2 Jazzy + rosbridge_server + Gazebo image
+
+FROM ros:jazzy-ros-base AS base
+
+# Install rosbridge_suite and Gazebo
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-jazzy-rosbridge-suite \
+    ros-jazzy-turtlebot3-gazebo \
+    ros-jazzy-turtlebot3-navigation2 \
+    ros-jazzy-nav2-bringup \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set default TurtleBot3 model
+ENV TURTLEBOT3_MODEL=burger
+ENV ROS_DOMAIN_ID=0
+
+# Copy the RosClaw discovery node
+COPY ros2_ws/src/rosclaw_discovery /ros2_ws/src/rosclaw_discovery
+COPY ros2_ws/src/rosclaw_msgs /ros2_ws/src/rosclaw_msgs
+
+# Build ROS2 packages
+WORKDIR /ros2_ws
+RUN . /opt/ros/jazzy/setup.sh && \
+    colcon build --symlink-install
+
+# Entrypoint: source workspace and launch rosbridge
+COPY docker/ros2_entrypoint.sh /ros2_entrypoint.sh
+RUN chmod +x /ros2_entrypoint.sh
+
+ENTRYPOINT ["/ros2_entrypoint.sh"]
+CMD ["ros2", "launch", "rosbridge_server", "rosbridge_websocket_launch.xml"]

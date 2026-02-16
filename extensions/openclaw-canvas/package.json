@@ -1,0 +1,32 @@
+{
+  "name": "@rosclaw/openclaw-canvas",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "OpenClaw canvas extension for real-time robot dashboard (Phase 3)",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@rosclaw/rosbridge-client": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PlaiPin/rosclaw.git",
+    "directory": "extensions/openclaw-canvas"
+  },
+  "author": "PlaiPin",
+  "license": "Apache-2.0"
+}

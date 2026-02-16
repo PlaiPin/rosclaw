@@ -1,0 +1,37 @@
+# RosClaw plugin image
+# Builds the TypeScript packages and extensions
+
+FROM node:20-slim AS base
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+
+WORKDIR /app
+
+# Copy workspace config
+COPY package.json pnpm-workspace.yaml .npmrc tsconfig.base.json ./
+
+# Copy package manifests for dependency resolution
+COPY packages/rosbridge-client/package.json packages/rosbridge-client/
+COPY extensions/openclaw-plugin/package.json extensions/openclaw-plugin/
+COPY extensions/openclaw-canvas/package.json extensions/openclaw-canvas/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy source code
+COPY packages/ packages/
+COPY extensions/ extensions/
+
+# Build all packages
+RUN pnpm build
+
+# --- Production stage ---
+FROM node:20-slim AS production
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+
+WORKDIR /app
+
+COPY --from=base /app .
+
+ENV NODE_ENV=production
+
+CMD ["node", "extensions/openclaw-plugin/dist/index.js"]

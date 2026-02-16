@@ -1,0 +1,24 @@
+{
+  "name": "rosclaw",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "ROS2 + OpenClaw — Natural language control of robots through messaging apps",
+  "scripts": {
+    "build": "pnpm -r build",
+    "clean": "pnpm -r exec rm -rf dist tsconfig.tsbuildinfo",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PlaiPin/rosclaw.git"
+  },
+  "author": "PlaiPin",
+  "license": "Apache-2.0"
+}

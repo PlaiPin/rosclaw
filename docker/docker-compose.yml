@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  # ROS2 + rosbridge_server + Gazebo simulation
+  ros2:
+    build:
+      context: .
+      dockerfile: Dockerfile.ros2
+    image: rosclaw/ros2:latest
+    ports:
+      - "9090:9090"   # rosbridge WebSocket
+      - "11311:11311" # ROS master (if needed)
+    environment:
+      - ROS_DOMAIN_ID=0
+      - GAZEBO_MODEL_PATH=/opt/ros/jazzy/share/turtlebot3_gazebo/models
+      - TURTLEBOT3_MODEL=burger
+    networks:
+      - rosclaw
+
+  # RosClaw plugin (runs within OpenClaw)
+  rosclaw:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.rosclaw
+    image: rosclaw/plugin:latest
+    environment:
+      - ROSCLAW_ROSBRIDGE_URL=ws://ros2:9090
+    depends_on:
+      - ros2
+    networks:
+      - rosclaw
+
+networks:
+  rosclaw:
+    driver: bridge

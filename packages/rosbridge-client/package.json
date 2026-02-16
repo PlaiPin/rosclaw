@@ -1,0 +1,33 @@
+{
+  "name": "@rosclaw/rosbridge-client",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "TypeScript WebSocket client for the rosbridge protocol",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.13",
+    "typescript": "^5.7.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PlaiPin/rosclaw.git",
+    "directory": "packages/rosbridge-client"
+  },
+  "author": "PlaiPin",
+  "license": "Apache-2.0"
+}

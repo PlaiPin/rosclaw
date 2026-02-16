@@ -1,0 +1,75 @@
+{
+  "id": "rosclaw",
+  "name": "RosClaw",
+  "version": "0.0.1",
+  "description": "Control ROS2 robots through natural language via messaging apps",
+  "entry": "./dist/index.js",
+  "config": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "rosbridge": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "description": "Rosbridge WebSocket URL",
+              "default": "ws://localhost:9090"
+            },
+            "reconnect": {
+              "type": "boolean",
+              "description": "Auto-reconnect on disconnect",
+              "default": true
+            },
+            "reconnectInterval": {
+              "type": "number",
+              "description": "Reconnect interval in milliseconds",
+              "default": 3000
+            }
+          },
+          "required": ["url"]
+        },
+        "robot": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Robot display name",
+              "default": "Robot"
+            },
+            "namespace": {
+              "type": "string",
+              "description": "ROS2 namespace for the robot",
+              "default": ""
+            }
+          }
+        },
+        "safety": {
+          "type": "object",
+          "properties": {
+            "maxLinearVelocity": {
+              "type": "number",
+              "description": "Maximum linear velocity (m/s)",
+              "default": 1.0
+            },
+            "maxAngularVelocity": {
+              "type": "number",
+              "description": "Maximum angular velocity (rad/s)",
+              "default": 1.5
+            },
+            "workspaceLimits": {
+              "type": "object",
+              "description": "Workspace boundary limits (meters)",
+              "properties": {
+                "xMin": { "type": "number", "default": -10 },
+                "xMax": { "type": "number", "default": 10 },
+                "yMin": { "type": "number", "default": -10 },
+                "yMax": { "type": "number", "default": 10 }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "id": "rosclaw-canvas",
+  "name": "RosClaw Canvas",
+  "version": "0.0.1",
+  "description": "Real-time robot dashboard via Canvas/A2UI (Phase 3)",
+  "entry": "./dist/index.js"
+}

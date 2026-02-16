@@ -1,0 +1,19 @@
+version: "3.8"
+
+# Development overrides — use with:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  ros2:
+    # Use host network for easier DDS discovery during development
+    # network_mode: host
+    environment:
+      - ROS_DOMAIN_ID=0
+
+  rosclaw:
+    volumes:
+      - ../packages:/app/packages
+      - ../extensions:/app/extensions
+    environment:
+      - NODE_ENV=development
+      - ROSCLAW_ROSBRIDGE_URL=ws://ros2:9090

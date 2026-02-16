@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# pnpm
+.pnpm-store/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# TypeScript
+*.js.map
+*.d.ts.map
+
+# ROS2
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+ros2_ws/src/*/build/
+
+# Docker
+docker/.env
+
+# Logs
+*.log
+npm-debug.log*

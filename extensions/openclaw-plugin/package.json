@@ -1,0 +1,33 @@
+{
+  "name": "@rosclaw/openclaw-plugin",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "OpenClaw extension for ROS2 robot control via natural language",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@rosclaw/rosbridge-client": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "typescript": "^5.7.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PlaiPin/rosclaw.git",
+    "directory": "extensions/openclaw-plugin"
+  },
+  "author": "PlaiPin",
+  "license": "Apache-2.0"
+}
