@@ -8,6 +8,17 @@
     "schema": {
       "type": "object",
       "properties": {
+        "transport": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": ["rosbridge", "local", "webrtc"],
+              "description": "Transport mode: rosbridge (Mode B), local (Mode A), or webrtc (Mode C)",
+              "default": "rosbridge"
+            }
+          }
+        },
         "rosbridge": {
           "type": "object",
           "properties": {
@@ -28,6 +39,56 @@
             }
           },
           "required": ["url"]
+        },
+        "local": {
+          "type": "object",
+          "properties": {
+            "domainId": {
+              "type": "number",
+              "description": "ROS2 domain ID for local DDS communication",
+              "default": 0
+            }
+          }
+        },
+        "webrtc": {
+          "type": "object",
+          "properties": {
+            "signalingUrl": {
+              "type": "string",
+              "description": "WebSocket URL of the signaling server (e.g., wss://signal-host)"
+            },
+            "apiUrl": {
+              "type": "string",
+              "description": "REST API URL of the signaling server (e.g., https://signal-host)"
+            },
+            "robotId": {
+              "type": "string",
+              "description": "Target robot's ID on the signaling server"
+            },
+            "robotKey": {
+              "type": "string",
+              "description": "Robot key secret (validated by robot, not server)"
+            },
+            "iceServers": {
+              "type": "array",
+              "description": "STUN/TURN server configuration",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "urls": {
+                    "description": "STUN/TURN server URL(s)"
+                  },
+                  "username": {
+                    "type": "string"
+                  },
+                  "credential": {
+                    "type": "string"
+                  }
+                }
+              },
+              "default": [{ "urls": "stun:stun.l.google.com:19302" }]
+            }
+          }
         },
         "robot": {
           "type": "object",

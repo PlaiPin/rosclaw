@@ -1,6 +1,5 @@
-import { TopicSubscriber } from "@rosclaw/rosbridge-client";
 import type { OpenClawPluginAPI } from "../../index.js";
-import { getRosbridgeClient } from "../service.js";
+import { getTransport } from "../service.js";
 
 /**
  * Register the ros2_subscribe_once tool with the AI agent.
@@ -36,21 +35,22 @@ export function registerSubscribeTool(api: OpenClawPluginAPI): void {
       // - Create subscriber
       // - Wait for first message or timeout
       // - Unsubscribe and return the message
-      const client = getRosbridgeClient();
+      const transport = getTransport();
       const timeout = params.timeout ?? 5000;
 
       return new Promise<Record<string, unknown>>((resolve, reject) => {
-        const subscriber = new TopicSubscriber(client, params.topic, params.type);
+        const subscription = transport.subscribe(
+          { topic: params.topic, type: params.type },
+          (msg) => {
+            clearTimeout(timer);
+            subscription.unsubscribe();
+            resolve({ success: true, topic: params.topic, message: msg });
+          },
+        );
         const timer = setTimeout(() => {
-          subscriber.unsubscribe();
+          subscription.unsubscribe();
           reject(new Error(`Timeout waiting for message on ${params.topic}`));
         }, timeout);
-
-        subscriber.subscribe((msg) => {
-          clearTimeout(timer);
-          subscriber.unsubscribe();
-          resolve({ success: true, topic: params.topic, message: msg });
-        });
       });
     },
   });

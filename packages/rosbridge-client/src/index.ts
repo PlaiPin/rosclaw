@@ -2,6 +2,7 @@ export { RosbridgeClient } from "./client.js";
 export { TopicPublisher, TopicSubscriber } from "./topics.js";
 export { callService } from "./services.js";
 export { ActionClient } from "./actions.js";
+export { RosbridgeTransport } from "./adapter.js";
 export type {
   RosbridgeClientOptions,
   ConnectionStatus,

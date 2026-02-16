@@ -1,6 +1,5 @@
-import { TopicPublisher } from "@rosclaw/rosbridge-client";
 import type { OpenClawPluginAPI } from "../../index.js";
-import { getRosbridgeClient } from "../service.js";
+import { getTransport } from "../service.js";
 
 /**
  * Register the /estop command.
@@ -21,21 +20,24 @@ export function registerEstopCommand(api: OpenClawPluginAPI): void {
       // - Optionally trigger hardware e-stop service if available
 
       try {
-        const client = getRosbridgeClient();
+        const transport = getTransport();
         const topic = namespace ? `${namespace}/cmd_vel` : "/cmd_vel";
-        const publisher = new TopicPublisher(client, topic, "geometry_msgs/msg/Twist");
 
         // Send zero velocity
-        publisher.publish({
-          linear: { x: 0, y: 0, z: 0 },
-          angular: { x: 0, y: 0, z: 0 },
+        transport.publish({
+          topic,
+          type: "geometry_msgs/msg/Twist",
+          msg: {
+            linear: { x: 0, y: 0, z: 0 },
+            angular: { x: 0, y: 0, z: 0 },
+          },
         });
 
         api.log.warn("ESTOP: Zero velocity command sent");
         return { message: "Emergency stop activated. Robot halted." };
       } catch (error) {
         api.log.error("ESTOP FAILED:", String(error));
-        return { message: "Emergency stop failed — rosbridge may be disconnected!" };
+        return { message: "Emergency stop failed — transport may be disconnected!" };
       }
     },
   });

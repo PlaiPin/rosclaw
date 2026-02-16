@@ -8,10 +8,14 @@ Whethere it's a cute desk robot or a humanoid robot, all you have to do is insta
 
 <p align="center">
   <a href="https://x.com/livinoffwater/status/2017172436119331133">
-    <img src="assets/thumbnail-1.jpg" alt="RosClaw Demo Video" width="600" />
+    <img src="assets/thumbnail-1.jpg" alt="RosClaw Demo Video" width="380" />
+  </a>
+  &nbsp;&nbsp;
+  <a href="">
+    <img src="assets/thumbnail-2.jpg" alt="RosClaw Demo" width="380" />
   </a>
   <br />
-  <em>Click to watch the demo</em>
+  <em>Click to watch the demos</em>
 </p>
 
 ## How It Works

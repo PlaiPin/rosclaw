@@ -24,6 +24,7 @@ services:
       dockerfile: docker/Dockerfile.rosclaw
     image: rosclaw/plugin:latest
     environment:
+      - ROSCLAW_TRANSPORT_MODE=rosbridge
       - ROSCLAW_ROSBRIDGE_URL=ws://ros2:9090
     depends_on:
       - ros2

@@ -1,6 +1,5 @@
 import type { OpenClawPluginAPI } from "../../index.js";
-import { getRosbridgeClient } from "../service.js";
-import { callService } from "@rosclaw/rosbridge-client";
+import { getTransport } from "../service.js";
 
 /**
  * Register ros2_param_get and ros2_param_set tools with the AI agent.
@@ -29,13 +28,12 @@ export function registerParamTools(api: OpenClawPluginAPI): void {
     async execute(params: { node: string; parameter: string }) {
       // TODO: Implement parameter get via service call
       // Uses the /{node}/get_parameters service
-      const client = getRosbridgeClient();
-      const response = await callService(
-        client,
-        `${params.node}/get_parameters`,
-        { names: [params.parameter] },
-        "rcl_interfaces/srv/GetParameters",
-      );
+      const transport = getTransport();
+      const response = await transport.callService({
+        service: `${params.node}/get_parameters`,
+        type: "rcl_interfaces/srv/GetParameters",
+        args: { names: [params.parameter] },
+      });
       return {
         success: response.result,
         node: params.node,
@@ -71,17 +69,16 @@ export function registerParamTools(api: OpenClawPluginAPI): void {
     async execute(params: { node: string; parameter: string; value: unknown }) {
       // TODO: Implement parameter set via service call
       // Uses the /{node}/set_parameters service
-      const client = getRosbridgeClient();
-      const response = await callService(
-        client,
-        `${params.node}/set_parameters`,
-        {
+      const transport = getTransport();
+      const response = await transport.callService({
+        service: `${params.node}/set_parameters`,
+        type: "rcl_interfaces/srv/SetParameters",
+        args: {
           parameters: [
             { name: params.parameter, value: params.value },
           ],
         },
-        "rcl_interfaces/srv/SetParameters",
-      );
+      });
       return {
         success: response.result,
         node: params.node,

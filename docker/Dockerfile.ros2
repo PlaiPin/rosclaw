@@ -17,6 +17,7 @@ ENV ROS_DOMAIN_ID=0
 # Copy the RosClaw discovery node
 COPY ros2_ws/src/rosclaw_discovery /ros2_ws/src/rosclaw_discovery
 COPY ros2_ws/src/rosclaw_msgs /ros2_ws/src/rosclaw_msgs
+COPY ros2_ws/src/rosclaw_agent /ros2_ws/src/rosclaw_agent
 
 # Build ROS2 packages
 WORKDIR /ros2_ws

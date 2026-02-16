@@ -1,0 +1,35 @@
+version: "3.8"
+
+# Mode C: Robot-side — ROS2 + rosclaw_agent on the robot.
+# The agent connects outbound to the signaling server and bridges
+# WebRTC data channel messages to local ROS2 DDS.
+
+services:
+  # ROS2 stack (no rosbridge needed — agent talks directly to DDS)
+  ros2:
+    build:
+      context: .
+      dockerfile: Dockerfile.ros2
+    image: rosclaw/ros2:latest
+    environment:
+      - ROS_DOMAIN_ID=0
+      - GAZEBO_MODEL_PATH=/opt/ros/jazzy/share/turtlebot3_gazebo/models
+      - TURTLEBOT3_MODEL=burger
+    network_mode: host
+
+  # RosClaw agent node (connects to signaling server, bridges to DDS)
+  rosclaw-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.ros2
+    image: rosclaw/ros2:latest
+    command: ["ros2", "run", "rosclaw_agent", "agent_node"]
+    environment:
+      - ROS_DOMAIN_ID=0
+      - ROSCLAW_SIGNALING_URL=${SIGNALING_URL}
+      - ROSCLAW_ROBOT_TOKEN=${ROBOT_TOKEN}
+      - ROSCLAW_ROBOT_KEY=${ROBOT_KEY}
+      - ROSCLAW_ROBOT_ID=${ROBOT_ID}
+    depends_on:
+      - ros2
+    network_mode: host

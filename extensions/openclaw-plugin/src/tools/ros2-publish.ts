@@ -1,6 +1,5 @@
-import { TopicPublisher } from "@rosclaw/rosbridge-client";
 import type { OpenClawPluginAPI } from "../../index.js";
-import { getRosbridgeClient } from "../service.js";
+import { getTransport } from "../service.js";
 
 /**
  * Register the ros2_publish tool with the AI agent.
@@ -33,9 +32,8 @@ export function registerPublishTool(api: OpenClawPluginAPI): void {
 
     async execute(params: { topic: string; type: string; message: Record<string, unknown> }) {
       // TODO: Implement full publish logic with error handling
-      const client = getRosbridgeClient();
-      const publisher = new TopicPublisher(client, params.topic, params.type);
-      publisher.publish(params.message);
+      const transport = getTransport();
+      transport.publish({ topic: params.topic, type: params.type, msg: params.message });
       return { success: true, topic: params.topic, type: params.type };
     },
   });

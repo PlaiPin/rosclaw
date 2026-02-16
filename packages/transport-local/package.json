@@ -1,8 +1,8 @@
 {
-  "name": "@rosclaw/openclaw-plugin",
+  "name": "@rosclaw/transport-local",
   "version": "0.0.1",
   "type": "module",
-  "description": "OpenClaw extension for ROS2 robot control via natural language",
+  "description": "Local DDS transport adapter for same-machine ROS2 communication (Mode A)",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -17,19 +17,15 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@rosclaw/transport": "workspace:*",
-    "@rosclaw/rosbridge-client": "workspace:*",
-    "@rosclaw/transport-local": "workspace:*",
-    "@rosclaw/transport-webrtc": "workspace:*"
+    "@rosclaw/transport": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^20.17.0",
     "typescript": "^5.7.0"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/PlaiPin/rosclaw.git",
-    "directory": "extensions/openclaw-plugin"
+    "directory": "packages/transport-local"
   },
   "author": "PlaiPin",
   "license": "Apache-2.0"

@@ -17,6 +17,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@rosclaw/transport": "workspace:*",
     "ws": "^8.18.0"
   },
   "devDependencies": {

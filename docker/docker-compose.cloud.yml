@@ -1,0 +1,51 @@
+version: "3.8"
+
+# Mode C: Cloud-side — OpenClaw + RosClaw plugin on a cloud VPS.
+# Connects to the robot via WebRTC through the signaling server.
+
+services:
+  # RosClaw plugin (cloud-side, WebRTC transport)
+  rosclaw:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.rosclaw
+    image: rosclaw/plugin:latest
+    environment:
+      - ROSCLAW_TRANSPORT_MODE=webrtc
+      - ROSCLAW_WEBRTC_SIGNALING_URL=wss://signaling-server:8443/ws
+      - ROSCLAW_WEBRTC_API_URL=https://signaling-server:8443
+      - ROSCLAW_WEBRTC_ROBOT_ID=${ROBOT_ID}
+      - ROSCLAW_WEBRTC_ROBOT_KEY=${ROBOT_KEY}
+    depends_on:
+      - signaling-server
+    networks:
+      - rosclaw
+
+  # WebRTC signaling server (existing webrtc-py FastAPI server)
+  signaling-server:
+    build:
+      context: ../../webrtc-server/webrtc-py
+      dockerfile: Dockerfile
+    image: rosclaw/signaling:latest
+    ports:
+      - "8443:8443"
+    environment:
+      - ROBOT_TOKEN=${ROBOT_TOKEN}
+    networks:
+      - rosclaw
+
+  # TURN relay server (optional — for networks where P2P fails)
+  coturn:
+    image: coturn/coturn:latest
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+    environment:
+      - TURN_USERNAME=${TURN_USERNAME:-rosclaw}
+      - TURN_PASSWORD=${TURN_PASSWORD:-rosclaw}
+    networks:
+      - rosclaw
+
+networks:
+  rosclaw:
+    driver: bridge

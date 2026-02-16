@@ -1,6 +1,5 @@
-import { callService } from "@rosclaw/rosbridge-client";
 import type { OpenClawPluginAPI } from "../../index.js";
-import { getRosbridgeClient } from "../service.js";
+import { getTransport } from "../service.js";
 
 /**
  * Register the ros2_service_call tool with the AI agent.
@@ -33,8 +32,12 @@ export function registerServiceTool(api: OpenClawPluginAPI): void {
 
     async execute(params: { service: string; type?: string; args?: Record<string, unknown> }) {
       // TODO: Implement full service call with error handling
-      const client = getRosbridgeClient();
-      const response = await callService(client, params.service, params.args, params.type);
+      const transport = getTransport();
+      const response = await transport.callService({
+        service: params.service,
+        type: params.type,
+        args: params.args,
+      });
       return {
         success: response.result,
         service: params.service,

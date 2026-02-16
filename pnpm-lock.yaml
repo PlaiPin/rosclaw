@@ -23,6 +23,15 @@ importers:
       '@rosclaw/rosbridge-client':
         specifier: workspace:*
         version: link:../../packages/rosbridge-client
+      '@rosclaw/transport':
+        specifier: workspace:*
+        version: link:../../packages/transport
+      '@rosclaw/transport-local':
+        specifier: workspace:*
+        version: link:../../packages/transport-local
+      '@rosclaw/transport-webrtc':
+        specifier: workspace:*
+        version: link:../../packages/transport-webrtc
     devDependencies:
       '@types/node':
         specifier: ^20.17.0
@@ -33,6 +42,9 @@ importers:
 
   packages/rosbridge-client:
     dependencies:
+      '@rosclaw/transport':
+        specifier: workspace:*
+        version: link:../transport
       ws:
         specifier: ^8.18.0
         version: 8.19.0
@@ -40,6 +52,32 @@ importers:
       '@types/ws':
         specifier: ^8.5.13
         version: 8.18.1
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/transport:
+    devDependencies:
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/transport-local:
+    dependencies:
+      '@rosclaw/transport':
+        specifier: workspace:*
+        version: link:../transport
+    devDependencies:
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/transport-webrtc:
+    dependencies:
+      '@rosclaw/transport':
+        specifier: workspace:*
+        version: link:../transport
+    devDependencies:
       typescript:
         specifier: ^5.7.0
         version: 5.9.3

@@ -10,7 +10,10 @@ WORKDIR /app
 COPY package.json pnpm-workspace.yaml .npmrc tsconfig.base.json ./
 
 # Copy package manifests for dependency resolution
+COPY packages/transport/package.json packages/transport/
 COPY packages/rosbridge-client/package.json packages/rosbridge-client/
+COPY packages/transport-local/package.json packages/transport-local/
+COPY packages/transport-webrtc/package.json packages/transport-webrtc/
 COPY extensions/openclaw-plugin/package.json extensions/openclaw-plugin/
 COPY extensions/openclaw-canvas/package.json extensions/openclaw-canvas/
 

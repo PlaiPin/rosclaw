@@ -1,6 +1,5 @@
-import { TopicSubscriber } from "@rosclaw/rosbridge-client";
 import type { OpenClawPluginAPI } from "../../index.js";
-import { getRosbridgeClient } from "../service.js";
+import { getTransport } from "../service.js";
 
 /**
  * Register the ros2_camera_snapshot tool with the AI agent.
@@ -32,33 +31,30 @@ export function registerCameraTool(api: OpenClawPluginAPI): void {
       // - Grab the first frame
       // - Convert to base64 for inline display
       // - Return as media attachment
-      const client = getRosbridgeClient();
+      const transport = getTransport();
       const topic = params.topic ?? "/camera/image_raw/compressed";
       const timeout = params.timeout ?? 10000;
 
       return new Promise<Record<string, unknown>>((resolve, reject) => {
-        const subscriber = new TopicSubscriber(
-          client,
-          topic,
-          "sensor_msgs/msg/CompressedImage",
+        const subscription = transport.subscribe(
+          { topic, type: "sensor_msgs/msg/CompressedImage" },
+          (msg) => {
+            clearTimeout(timer);
+            subscription.unsubscribe();
+            // TODO: Extract base64 image data from msg.data
+            // TODO: Return as media attachment via OpenClaw API
+            resolve({
+              success: true,
+              topic,
+              format: msg["format"] ?? "jpeg",
+              data: msg["data"] ?? "",
+            });
+          },
         );
         const timer = setTimeout(() => {
-          subscriber.unsubscribe();
+          subscription.unsubscribe();
           reject(new Error(`Timeout waiting for camera frame on ${topic}`));
         }, timeout);
-
-        subscriber.subscribe((msg) => {
-          clearTimeout(timer);
-          subscriber.unsubscribe();
-          // TODO: Extract base64 image data from msg.data
-          // TODO: Return as media attachment via OpenClaw API
-          resolve({
-            success: true,
-            topic,
-            format: msg["format"] ?? "jpeg",
-            data: msg["data"] ?? "",
-          });
-        });
       });
     },
   });

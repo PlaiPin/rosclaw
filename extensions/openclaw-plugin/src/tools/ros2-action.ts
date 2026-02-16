@@ -1,4 +1,5 @@
 import type { OpenClawPluginAPI } from "../../index.js";
+import { getTransport } from "../service.js";
 
 /**
  * Register the ros2_action_goal tool with the AI agent.
@@ -6,15 +7,13 @@ import type { OpenClawPluginAPI } from "../../index.js";
  */
 export function registerActionTool(api: OpenClawPluginAPI): void {
   // TODO: Phase 2 — Implement action goal tool
-  // - Send action goals via ActionClient
   // - Stream feedback back to the chat
   // - Support cancellation
   api.registerTool({
     name: "ros2_action_goal",
     description:
       "Send a goal to a ROS2 action server and stream feedback. " +
-      "Use this for long-running operations like navigation or arm movements. " +
-      "(Phase 2 — not yet implemented)",
+      "Use this for long-running operations like navigation or arm movements.",
     parameters: {
       type: "object",
       properties: {
@@ -34,11 +33,17 @@ export function registerActionTool(api: OpenClawPluginAPI): void {
       required: ["action", "actionType", "goal"],
     },
 
-    async execute(_params: { action: string; actionType: string; goal: Record<string, unknown> }) {
-      // TODO: Phase 2 implementation
+    async execute(params: { action: string; actionType: string; goal: Record<string, unknown> }) {
+      const transport = getTransport();
+      const result = await transport.sendActionGoal({
+        action: params.action,
+        actionType: params.actionType,
+        args: params.goal,
+      });
       return {
-        success: false,
-        error: "ros2_action_goal is not yet implemented (Phase 2)",
+        success: result.result,
+        action: params.action,
+        result: result.values,
       };
     },
   });

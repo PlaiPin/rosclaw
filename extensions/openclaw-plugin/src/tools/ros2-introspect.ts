@@ -1,6 +1,5 @@
 import type { OpenClawPluginAPI } from "../../index.js";
-import { getRosbridgeClient } from "../service.js";
-import { callService } from "@rosclaw/rosbridge-client";
+import { getTransport } from "../service.js";
 
 /**
  * Register the ros2_list_topics tool with the AI agent.
@@ -18,19 +17,12 @@ export function registerIntrospectTool(api: OpenClawPluginAPI): void {
     },
 
     async execute() {
-      // TODO: Implement topic listing via rosbridge
-      // Option A: Use rosbridge's built-in /rosapi/topics service
-      // Option B: Query the rosclaw_discovery node's capability manifest
-      const client = getRosbridgeClient();
-      const response = await callService(
-        client,
-        "/rosapi/topics",
-        {},
-        "rosapi/srv/Topics",
-      );
+      // TODO: Option to also query rosclaw_discovery node's capability manifest
+      const transport = getTransport();
+      const topics = await transport.listTopics();
       return {
-        success: response.result,
-        topics: response.values,
+        success: true,
+        topics,
       };
     },
   });
