@@ -32,6 +32,13 @@ ros2_ws/build/
 ros2_ws/install/
 ros2_ws/log/
 ros2_ws/src/*/build/
+ros2_ws/src/*/*.egg-info/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+ros_env/
 
 # Docker
 docker/.env
