@@ -34,7 +34,7 @@
 #   1. Detects platform (Ubuntu vs macOS)
 #   2. Installs platform-specific infrastructure
 #   3. Creates appropriate environment (venv with --system-site-packages vs conda)
-#   4. Installs ROS2, rosbridge_suite, and all required development tools
+#   4. Installs ROS2, rosbridge_library, and all required development tools
 #   5. Installs agent-specific pip dependencies (aiortc, websockets)
 #   6. Builds all ROS2 packages in ros2_ws
 #   7. Validates the complete setup

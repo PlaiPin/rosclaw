@@ -7,10 +7,10 @@ commands and responses flow over this encrypted peer-to-peer channel.
 
 Connection flow:
   1. Connect to signaling server via WebSocket
-  2. Send ROBOT_CONNECT with robot_token
-  3. Wait for SESSION_INVITATION, validate robot_key
-  4. Send SESSION_ACCEPTED, join room
-  5. Create SDP offer, exchange with frontend peer
+  2. Send robot_connect with robot_token
+  3. Wait for session_invitation, validate robot_key
+  4. Send session_accepted (server adds robot to room automatically)
+  5. Wait for peer_joined (frontend), then create and send SDP offer
   6. Exchange ICE candidates
   7. Data channel opens — rosbridge JSON over WebRTC
 
@@ -20,11 +20,16 @@ Message flow:
   - Execute against the local ROS2 DDS bus via rclpy
   - Send responses back over the data channel
 
-Environment variables:
-  ROSCLAW_SIGNALING_URL  — WebSocket URL of the signaling server
-  ROSCLAW_ROBOT_TOKEN    — Authentication token for the signaling server
-  ROSCLAW_ROBOT_KEY      — Secret key validated by this node
-  ROSCLAW_ROBOT_ID       — This robot's ID on the signaling server
+Configuration (ROS2 parameters with env var fallback):
+  signaling_url  / ROSCLAW_SIGNALING_URL  — WebSocket URL of the signaling server
+  robot_token    / ROSCLAW_ROBOT_TOKEN    — Authentication token for the signaling server
+  robot_key      / ROSCLAW_ROBOT_KEY      — Secret key validated by this node
+  robot_id       / ROSCLAW_ROBOT_ID       — This robot's ID on the signaling server
+
+  Pass via ROS2 parameters:
+    ros2 run rosclaw_agent agent_node --ros-args -p signaling_url:=wss://example.com
+  Or via environment variables:
+    ROSCLAW_SIGNALING_URL=wss://example.com ros2 run rosclaw_agent agent_node
 """
 
 from __future__ import annotations
