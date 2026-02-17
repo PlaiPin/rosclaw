@@ -9,11 +9,12 @@ find_package(ament_cmake REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
-# TODO: Add custom message/service files when defined
-# rosidl_generate_interfaces(${PROJECT_NAME}
-#   "msg/CapabilityManifest.msg"
-#   "srv/GetCapabilities.srv"
-#   DEPENDENCIES std_msgs
-# )
+find_package(builtin_interfaces REQUIRED)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/CapabilityManifest.msg"
+  "srv/GetCapabilities.srv"
+  DEPENDENCIES std_msgs builtin_interfaces
+)
 
 ament_package()

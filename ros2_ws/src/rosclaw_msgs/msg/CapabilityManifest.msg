@@ -1,0 +1,9 @@
+string robot_name
+string robot_namespace
+string[] topic_names
+string[] topic_types
+string[] service_names
+string[] service_types
+string[] action_names
+string[] action_types
+builtin_interfaces/Time stamp
