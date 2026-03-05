@@ -1,0 +1,4 @@
+float32 distance
+---
+bool success
+float32 target_distance

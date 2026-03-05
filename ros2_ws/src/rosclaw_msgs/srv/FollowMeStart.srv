@@ -1,0 +1,5 @@
+# Start following. Empty target_description = follow closest person.
+string target_description
+---
+bool success
+string message

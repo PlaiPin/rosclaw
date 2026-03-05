@@ -3,6 +3,7 @@ import type {
   ConnectionHandler,
   Subscription,
   PublishOptions,
+  AdvertiseOptions,
   SubscribeOptions,
   ServiceCallOptions,
   ServiceCallResult,
@@ -37,6 +38,9 @@ export interface RosTransport {
   onConnection(handler: ConnectionHandler): () => void;
 
   // --- Topics ---
+
+  /** Optional: advertise topic with type (rosbridge uses this so publish works when topic not yet established). */
+  advertise?(options: AdvertiseOptions): void;
 
   /** Publish a message to a ROS2 topic. */
   publish(options: PublishOptions): void;

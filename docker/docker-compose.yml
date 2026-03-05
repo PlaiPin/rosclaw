@@ -4,8 +4,8 @@ services:
   # ROS2 + rosbridge_server + Gazebo simulation
   ros2:
     build:
-      context: .
-      dockerfile: Dockerfile.ros2
+      context: ..
+      dockerfile: docker/Dockerfile.ros2
     image: rosclaw/ros2:latest
     ports:
       - "9090:9090"   # rosbridge WebSocket

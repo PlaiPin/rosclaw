@@ -123,6 +123,35 @@ export type BeforeToolCallHandler = (
   ctx: BeforeToolCallContext,
 ) => Promise<BeforeToolCallResult | void> | BeforeToolCallResult | void;
 
+// --- HTTP routes (Phase 3 teleop) ---
+
+/** Minimal request shape for plugin HTTP route handlers (gateway provides at runtime). */
+export interface HttpRouteRequest {
+  method: string;
+  url: string;
+  /** Read JSON body (e.g. for POST). May throw if body is invalid. */
+  readJsonBody?(): Promise<Record<string, unknown>>;
+}
+
+/** Minimal response shape for plugin HTTP route handlers (Node-style; gateway provides at runtime). */
+export interface HttpRouteResponse {
+  setHeader(name: string, value: string | number): void;
+  /** HTTP status code (e.g. res.statusCode = 200). */
+  statusCode: number;
+  end(body?: string | Buffer): void;
+}
+
+export type HttpRouteHandler = (
+  req: HttpRouteRequest,
+  res: HttpRouteResponse,
+) => void | Promise<void>;
+
+export interface HttpRouteOptions {
+  path: string;
+  method?: string;
+  handler: HttpRouteHandler;
+}
+
 // --- Plugin API ---
 
 export interface OpenClawPluginApi {
@@ -132,6 +161,8 @@ export interface OpenClawPluginApi {
   registerTool(tool: AgentTool, opts?: { name?: string; names?: string[]; optional?: boolean }): void;
   registerService(service: PluginService): void;
   registerCommand(command: PluginCommand): void;
+  /** Register an HTTP route (e.g. for Phase 3 teleop). Optional; gateway may not provide it. */
+  registerHttpRoute?(options: HttpRouteOptions): void;
 
   on(hookName: "before_agent_start", handler: BeforeAgentStartHandler): void;
   on(hookName: "before_tool_call", handler: BeforeToolCallHandler): void;

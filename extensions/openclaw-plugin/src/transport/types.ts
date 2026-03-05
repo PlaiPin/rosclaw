@@ -23,6 +23,12 @@ export interface PublishOptions {
   msg: Record<string, unknown>;
 }
 
+/** Optional: advertise a topic (type) before publishing. Used by rosbridge so the server creates the publisher with the right type. */
+export interface AdvertiseOptions {
+  topic: string;
+  type: string;
+}
+
 // --- Subscribe ---
 
 export interface SubscribeOptions {
@@ -106,6 +112,15 @@ export interface WebRTCTransportConfig {
   };
 }
 
+export interface ZenohTransportConfig {
+  mode: "zenoh";
+  zenoh: {
+    routerEndpoint: string;
+    domainId?: number;
+    keyFormat?: "ros2dds" | "rmw_zenoh";
+  };
+}
+
 export interface RTCIceServerConfig {
   urls: string | string[];
   username?: string;
@@ -116,4 +131,5 @@ export interface RTCIceServerConfig {
 export type TransportConfig =
   | RosbridgeTransportConfig
   | LocalTransportConfig
-  | WebRTCTransportConfig;
+  | WebRTCTransportConfig
+  | ZenohTransportConfig;

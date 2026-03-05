@@ -1,11 +1,13 @@
 import { Type } from "@sinclair/typebox";
 import type { OpenClawPluginApi } from "../plugin-api.js";
+import type { RosClawConfig } from "../config.js";
+import { toNamespacedTopic } from "../topic-utils.js";
 import { getTransport } from "../service.js";
 
 /**
  * Register ros2_param_get and ros2_param_set tools with the AI agent.
  */
-export function registerParamTools(api: OpenClawPluginApi): void {
+export function registerParamTools(api: OpenClawPluginApi, config: RosClawConfig): void {
   api.registerTool({
     name: "ros2_param_get",
     label: "ROS2 Get Parameter",
@@ -18,7 +20,8 @@ export function registerParamTools(api: OpenClawPluginApi): void {
     }),
 
     async execute(_toolCallId, params) {
-      const node = params["node"] as string;
+      const rawNode = params["node"] as string;
+      const node = toNamespacedTopic(config, rawNode);
       const parameter = params["parameter"] as string;
 
       const transport = getTransport();
@@ -54,7 +57,8 @@ export function registerParamTools(api: OpenClawPluginApi): void {
     }),
 
     async execute(_toolCallId, params) {
-      const node = params["node"] as string;
+      const rawNode = params["node"] as string;
+      const node = toNamespacedTopic(config, rawNode);
       const parameter = params["parameter"] as string;
       const value = params["value"];
 

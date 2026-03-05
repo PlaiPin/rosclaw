@@ -1,12 +1,14 @@
 import { Type } from "@sinclair/typebox";
 import type { OpenClawPluginApi } from "../plugin-api.js";
+import type { RosClawConfig } from "../config.js";
+import { toNamespacedTopic } from "../topic-utils.js";
 import { getTransport } from "../service.js";
 
 /**
  * Register the ros2_service_call tool with the AI agent.
  * Allows calling any ROS2 service.
  */
-export function registerServiceTool(api: OpenClawPluginApi): void {
+export function registerServiceTool(api: OpenClawPluginApi, config: RosClawConfig): void {
   api.registerTool({
     name: "ros2_service_call",
     label: "ROS2 Service Call",
@@ -22,7 +24,8 @@ export function registerServiceTool(api: OpenClawPluginApi): void {
     }),
 
     async execute(_toolCallId, params) {
-      const service = params["service"] as string;
+      const rawService = params["service"] as string;
+      const service = toNamespacedTopic(config, rawService);
       const type = params["type"] as string | undefined;
       const args = params["args"] as Record<string, unknown> | undefined;
 

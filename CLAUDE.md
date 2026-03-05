@@ -36,7 +36,8 @@ The transport abstraction lives inside the plugin at `extensions/openclaw-plugin
 - **`ros2_ws/`** — ROS2 colcon workspace
 - **`docker/`** — Docker Compose and Dockerfiles
 - **`examples/`** — Demo projects
-- **`docs/`** — Architecture and design docs
+- **`docs/`** — Architecture and design docs (see `docs/missions.md` for Follow Me and other missions)
+- **`ros2_ws/src/rosclaw_follow_me/`** — Follow Me mission: ROS2 node (person tracking + cmd_vel), used by the plugin via ROS2 services
 
 ## Key Commands
 

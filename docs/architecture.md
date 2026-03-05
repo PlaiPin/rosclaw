@@ -38,7 +38,7 @@ across all modes — only the transport between them changes.
 │  │  │                                                                      │   │  │
 │  │  │  ros2_publish    ros2_subscribe_once    ros2_service_call            │   │  │
 │  │  │  ros2_action_goal   ros2_param_get/set  ros2_list_topics            │   │  │
-│  │  │  ros2_camera_snapshot                                                │   │  │
+│  │  │  ros2_camera_snapshot   follow_robot (Follow Me mission)            │   │  │
 │  │  └──────────────────────────────┬──────────────────────────────────────┘   │  │
 │  │                                 │                                          │  │
 │  │  ┌──────────────┐  ┌───────────▼──────────┐  ┌─────────────────────┐      │  │
@@ -48,6 +48,7 @@ across all modes — only the transport between them changes.
 │  │  │ take-photo   │  │  · velocity limits   │  │  · capabilities    │      │  │
 │  │  │ check-status │  │  · workspace bounds  │  │  · topics/services │      │  │
 │  │  │ pick-object  │  │  · blocked ops       │  │  · safety config   │      │  │
+│  │  │ follow-me    │  │                      │  │                     │      │  │
 │  │  └──────────────┘  └──────────┬───────────┘  └─────────────────────┘      │  │
 │  │                               │                                            │  │
 │  │  ┌────────────────────────────┤   ┌──────────────────────────────────┐     │  │
@@ -59,7 +60,7 @@ across all modes — only the transport between them changes.
                                                       │
                                                       ▼
                                           ┌───────────────────────┐
-                                          │  Mode A, B, or C      │
+                                          │  Mode A, B, C, or D   │
                                           │  (see below)          │
                                           └───────────────────────┘
 ```
@@ -230,6 +231,53 @@ needs a public IP or open inbound ports.
 
 ---
 
+## Deployment Mode D: Zenoh
+
+When the robot uses **ROS 2 with Zenoh RMW** (`RMW_IMPLEMENTATION=rmw_zenoh_cpp`),
+the plugin can connect directly to a Zenoh router via **zenoh-ts** (WebSocket to
+`zenoh-plugin-remote-api`). No rosbridge or WebRTC bridge is required.
+
+Best for: robots already on Zenoh, low-latency pub/sub, or deployments that
+prefer the Zenoh stack over DDS.
+
+```
+    User (Telegram, WhatsApp, etc.)
+                 │
+                 │  internet
+                 ▼
+┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐     ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
+│  OPENCLAW MACHINE               │     │  ROBOT (Zenoh RMW)           │
+│                                 │     │                               │
+│  ┌──────────────────────────┐   │     │  ┌─────────────────────────┐  │
+│  │  OPENCLAW + ROSCLAW      │   │     │  │  Zenoh router           │  │
+│  │  PLUGIN                  │   │     │  │  (zenohd)                │  │
+│  │                          │   │     │  └───────────┬─────────────┘  │
+│  │  zenoh-ts (WebSocket)    │───┼─────┼─►             │                │
+│  └──────────────────────────┘   │     │               │ Zenoh         │
+│                                 │     │  ┌─────────────▼─────────────┐  │
+└ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘     │  │  ROS2 (rmw_zenoh_cpp)      │  │
+                                       │  │  /cmd_vel  /odom  ...       │  │
+                                       │  └─────────────┬─────────────┘  │
+                                       │                ▼                │
+                                       │  ┌─────────────────────────────┐  │
+                                       │  │  ROBOT HARDWARE             │  │
+                                       │  └─────────────────────────────┘  │
+                                       │                                   │
+                                       └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+
+Transport: Zenoh (WebSocket to Zenoh router; plugin uses zenoh-ts)
+Latency:   ~ms
+NAT issue:  depends on network — router must be reachable from OpenClaw
+```
+
+Set `transport.mode` to `zenoh`, configure `zenoh.routerEndpoint` (e.g.
+`ws://router-host:10000` for zenoh-ts), and optionally `zenoh.domainId` to
+match `ROS_DOMAIN_ID` / rmw_zenoh. The `robot.namespace` config applies to
+topic names (and thus to Zenoh key expressions), e.g. namespace `robot-uuid`
+yields `/robot-uuid/cmd_vel`.
+
+---
+
 ## Transport Adapter Abstraction
 
 All plugin tools call `getTransport()` instead of directly using a specific
@@ -248,8 +296,11 @@ a unified API for all three deployment modes:
        ├── LocalTransport      (Mode A — @rosclaw/transport-local, stub)
        │     └── rclnodejs → ROS2 DDS directly
        │
-       └── WebRTCTransport     (Mode C — @rosclaw/transport-webrtc, stub)
-             └── WebRTC data channel → rosclaw_agent → ROS2 DDS
+       ├── WebRTCTransport     (Mode C — @rosclaw/transport-webrtc, stub)
+       │     └── WebRTC data channel → rosclaw_agent → ROS2 DDS
+       │
+       └── ZenohTransport      (Mode D — zenoh-ts)
+             └── WebSocket → Zenoh router → ROS2 (rmw_zenoh_cpp)
 ```
 
 The `createTransport(config)` factory in `@rosclaw/transport` uses dynamic

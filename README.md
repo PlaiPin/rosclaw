@@ -81,6 +81,47 @@ docker compose up
 
 This starts ROS2 + rosbridge + Gazebo. Then configure your OpenClaw instance to use the RosClaw plugin with `ws://localhost:9090`.
 
+### Run without ROS installed (Docker + OpenClaw on your machine)
+
+If you don’t have ROS on your host (e.g. macOS with only OpenClaw and Docker):
+
+1. **Start the simulation in Docker** (from the repo root):
+   ```bash
+   cd docker
+   docker compose up ros2
+   ```
+   This runs ROS2, rosbridge, and Gazebo in a container and exposes rosbridge at `localhost:9090`.
+
+2. **Build the RosClaw plugin** (in the repo root):
+   ```bash
+   pnpm install
+   pnpm build
+   ```
+
+3. **Install the plugin into OpenClaw** from the local path:
+   ```bash
+   openclaw plugins install -l ./extensions/openclaw-plugin
+   ```
+   Use the path to your cloned `rosclaw` repo (e.g. `/Users/you/Projects/rosclaw/extensions/openclaw-plugin` if needed).
+
+4. **Configure the plugin** in OpenClaw with rosbridge URL **`ws://localhost:9090`** (this is the default).
+
+5. Start OpenClaw and use your configured messaging channel; the plugin will talk to the simulation in Docker over WebSocket.
+
+### Run on your own robot (Ubuntu + ROS2)
+
+**New robot?** Use the onboarding wizard: `./scripts/onboard_robot.sh` (run from the repo root). It guides you through robot-side and/or gateway-side setup.
+
+For manual steps, see **[Robot Setup Guide](docs/robot-setup.md)**. Quick path: `./scripts/setup_robot.sh` on the robot, `./scripts/setup_gateway_plugin.sh` where OpenClaw runs, then `./scripts/run_demo_native.sh` to start the bridges.
+
+### Phase 3: Teleop Web App
+
+When the gateway supports plugin HTTP routes, open the **teleop web app** in a browser for live camera and twist controls:
+
+- **URL:** `http://<gateway-host>:<port>/rosclaw/teleop/` (e.g. `http://localhost:18789/rosclaw/teleop/`)
+- Supports 2D webcam and RealSense; if multiple camera streams exist, choose the source from a dropdown.
+- See [Teleop (Phase 3)](docs/teleop.md) for config and requirements.
+
 ### Try It
 
 Send a message to your robot:

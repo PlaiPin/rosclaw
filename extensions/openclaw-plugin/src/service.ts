@@ -87,6 +87,9 @@ export function registerService(api: OpenClawPluginApi, config: RosClawConfig): 
         case "webrtc":
           transportCfg = { mode: "webrtc", webrtc: config.webrtc };
           break;
+        case "zenoh":
+          transportCfg = { mode: "zenoh", zenoh: config.zenoh };
+          break;
       }
 
       api.logger.info(`Connecting to ROS2 via ${mode} transport...`);

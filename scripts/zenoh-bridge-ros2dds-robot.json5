@@ -1,0 +1,28 @@
+// CONFIG FOR: zenoh-bridge-ros2dds (standalone) ON THE ROBOT
+// DO NOT use this file with zenohd. zenohd does not load the ros2dds plugin and will
+// panic on unknown keys (e.g. "allow"). On the Mac, run zenohd with zenohd-rosclaw.json5 only.
+//
+// On the robot, run: zenoh-bridge-ros2dds -c /path/to/zenoh-bridge-ros2dds-robot.json5
+// Edit connect.endpoints: use your Mac's actual IP (e.g. 192.168.0.241). Must match the
+// subnet the robot can reach (robot 192.168.0.x → use Mac 192.168.0.x; wrong subnet = connection timeout).
+// Subscriber regex must match your full cmd_vel topic (e.g. robot3946.../cmd_vel).
+// If you see "^./cmd_vel$" in bridge logs, the pattern was wrong (missing * or use .+/cmd_vel).
+
+{
+  "mode": "client",
+  "connect": {
+    "endpoints": ["tcp/192.168.0.241:7447"]
+  },
+  "plugins": {
+    "ros2dds": {
+      "allow": {
+        "publishers": [".+"],
+        "subscribers": [".+/cmd_vel", "/robot3946b404c33e4aa39a8d16deb1c5c593/cmd_vel"],
+        "service_servers": [],
+        "service_clients": [],
+        "action_servers": [],
+        "action_clients": []
+      }
+    }
+  }
+}

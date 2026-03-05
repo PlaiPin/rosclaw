@@ -4,7 +4,7 @@ import type { TransportConfig } from "../transport/types.js";
 import { getTransport, getTransportMode, switchTransport } from "../service.js";
 import { clearDiscoveryCache } from "../context/robot-context.js";
 
-const VALID_MODES = ["rosbridge", "local", "webrtc"] as const;
+const VALID_MODES = ["rosbridge", "local", "webrtc", "zenoh"] as const;
 type Mode = (typeof VALID_MODES)[number];
 
 function isValidMode(value: string): value is Mode {
@@ -17,7 +17,7 @@ function isValidMode(value: string): value is Mode {
 export function registerTransportCommand(api: OpenClawPluginApi, config: RosClawConfig): void {
   api.registerCommand({
     name: "transport",
-    description: "Show or switch the ROS2 transport mode (rosbridge, webrtc, local)",
+    description: "Show or switch the ROS2 transport mode (rosbridge, webrtc, local, zenoh)",
 
     async handler(ctx) {
       const args = (ctx.args ?? "").trim();
@@ -132,6 +132,24 @@ function buildTransportConfig(
 
       return { mode: "local", local: base };
     }
+
+    case "zenoh": {
+      const base = { ...config.zenoh };
+
+      for (const arg of overrides) {
+        if (arg.includes("=")) {
+          const [key, ...rest] = arg.split("=");
+          const value = rest.join("=");
+          applyOverride(base as Record<string, unknown>, key, value);
+        } else if (arg.startsWith("ws://") || arg.startsWith("wss://") || /^[a-z]+\/\S+/.test(arg)) {
+          base.routerEndpoint = arg;
+        } else {
+          throw new Error(`Unexpected argument: "${arg}". Use key=value or router endpoint.`);
+        }
+      }
+
+      return { mode: "zenoh", zenoh: base };
+    }
   }
 }
 
@@ -167,5 +185,11 @@ function formatSwitchSuccess(config: TransportConfig): string {
     }
     case "local":
       return `Switched to local transport (domainId: ${config.local?.domainId ?? 0})`;
+    case "zenoh":
+      return `Switched to zenoh transport (${config.zenoh.routerEndpoint})`;
+    default: {
+      const _: never = config;
+      return `Switched to ${(_ as TransportConfig).mode} transport`;
+    }
   }
 }

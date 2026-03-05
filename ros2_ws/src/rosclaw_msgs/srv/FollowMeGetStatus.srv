@@ -1,0 +1,11 @@
+---
+bool success
+bool enabled
+bool tracking
+float32 target_distance
+float32 current_distance
+int32 target_person_id
+string target_description
+int32 persons_detected
+geometry_msgs/Twist twist
+string error_message

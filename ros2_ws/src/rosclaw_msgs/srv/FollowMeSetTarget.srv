@@ -1,0 +1,6 @@
+string description
+---
+bool success
+int32 person_id
+float32 confidence
+string message

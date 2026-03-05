@@ -1,0 +1,11 @@
+{
+  "plugins_loading": {
+    "enabled": true,
+    "search_dirs": ["~/.zenoh/lib", "/opt/homebrew/lib", "/usr/local/lib"]
+  },
+  "plugins": {
+    "remote_api": {
+      "websocket_port": "10000"
+    }
+  }
+}

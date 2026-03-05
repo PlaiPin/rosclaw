@@ -34,6 +34,11 @@ export async function createTransport(config: TransportConfig): Promise<RosTrans
       return new WebRTCTransport(config.webrtc);
     }
 
+    case "zenoh": {
+      const { ZenohTransport } = await import("./zenoh/adapter.js");
+      return new ZenohTransport(config.zenoh);
+    }
+
     default: {
       const _exhaustive: never = config;
       throw new Error(`Unknown transport mode: ${(_exhaustive as TransportConfig).mode}`);

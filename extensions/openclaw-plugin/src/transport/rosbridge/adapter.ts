@@ -4,6 +4,7 @@ import type {
   ConnectionHandler,
   Subscription,
   PublishOptions,
+  AdvertiseOptions,
   SubscribeOptions,
   ServiceCallOptions,
   ServiceCallResult,
@@ -50,6 +51,14 @@ export class RosbridgeTransport implements RosTransport {
 
   onConnection(handler: ConnectionHandler): () => void {
     return this.client.onConnection(handler);
+  }
+
+  advertise(options: AdvertiseOptions): void {
+    this.client.send({
+      op: "advertise",
+      topic: options.topic,
+      type: options.type,
+    });
   }
 
   publish(options: PublishOptions): void {

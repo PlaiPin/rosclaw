@@ -259,6 +259,7 @@ setup_ubuntu() {
     sudo apt install -y \
         ros-$ROS_DISTRO-ros-base \
         ros-$ROS_DISTRO-rosbridge-library \
+        ros-$ROS_DISTRO-rosbridge-suite \
         python3-colcon-common-extensions
 
     log_success "All required ROS2 packages installed"

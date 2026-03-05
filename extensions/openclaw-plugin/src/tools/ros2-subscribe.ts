@@ -1,12 +1,14 @@
 import { Type } from "@sinclair/typebox";
 import type { OpenClawPluginApi } from "../plugin-api.js";
+import type { RosClawConfig } from "../config.js";
+import { toNamespacedTopic } from "../topic-utils.js";
 import { getTransport } from "../service.js";
 
 /**
  * Register the ros2_subscribe_once tool with the AI agent.
  * Subscribes to a topic and returns the next message received.
  */
-export function registerSubscribeTool(api: OpenClawPluginApi): void {
+export function registerSubscribeTool(api: OpenClawPluginApi, config: RosClawConfig): void {
   api.registerTool({
     name: "ros2_subscribe_once",
     label: "ROS2 Subscribe Once",
@@ -20,9 +22,14 @@ export function registerSubscribeTool(api: OpenClawPluginApi): void {
     }),
 
     async execute(_toolCallId, params) {
-      const topic = params["topic"] as string;
-      const msgType = params["type"] as string | undefined;
+      const rawTopic = params["topic"] as string;
+      const topic = toNamespacedTopic(config, rawTopic);
+      let msgType = params["type"] as string | undefined;
       const timeout = (params["timeout"] as number | undefined) ?? 5000;
+
+      if (!msgType && /\/?(camera|image|color|depth)/i.test(rawTopic)) {
+        msgType = rawTopic.includes("compressed") ? "sensor_msgs/msg/CompressedImage" : "sensor_msgs/msg/Image";
+      }
 
       const transport = getTransport();
 
@@ -41,8 +48,22 @@ export function registerSubscribeTool(api: OpenClawPluginApi): void {
         }, timeout);
       });
 
+      // Avoid sending huge payloads (e.g. image/point cloud) as text — burns tokens and triggers rate limits
+      const MAX_TEXT_CHARS = 8000;
+      let text = JSON.stringify(result);
+      if (text.length > MAX_TEXT_CHARS) {
+        text =
+          JSON.stringify({
+            success: true,
+            topic,
+            message: "[truncated: message too large for model context]",
+            originalSize: text.length,
+          }) +
+          "\n(Use ros2_camera_snapshot for image topics.)";
+      }
+
       return {
-        content: [{ type: "text", text: JSON.stringify(result) }],
+        content: [{ type: "text", text }],
         details: result,
       };
     },

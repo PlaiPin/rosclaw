@@ -12,8 +12,8 @@
         "properties": {
           "mode": {
             "type": "string",
-            "enum": ["rosbridge", "local", "webrtc"],
-            "description": "Transport mode: rosbridge (Mode B), local (Mode A), or webrtc (Mode C)",
+            "enum": ["rosbridge", "local", "webrtc", "zenoh"],
+            "description": "Transport mode: rosbridge (Mode B), local (Mode A), webrtc (Mode C), or zenoh (Mode D)",
             "default": "rosbridge"
           }
         }
@@ -46,6 +46,27 @@
             "type": "number",
             "description": "ROS2 domain ID for local DDS communication",
             "default": 0
+          }
+        }
+      },
+      "zenoh": {
+        "type": "object",
+        "properties": {
+          "routerEndpoint": {
+            "type": "string",
+            "description": "Zenoh router endpoint (e.g. ws://localhost:10000 for zenoh-ts)",
+            "default": "tcp/localhost:7447"
+          },
+          "domainId": {
+            "type": "number",
+            "description": "ROS2 domain ID (matches rmw_zenoh)",
+            "default": 0
+          },
+          "keyFormat": {
+            "type": "string",
+            "enum": ["ros2dds", "rmw_zenoh"],
+            "description": "Use ros2dds when using zenoh-bridge-ros2dds; use rmw_zenoh when robot uses Zenoh RMW directly",
+            "default": "ros2dds"
           }
         }
       },
@@ -99,9 +120,29 @@
           },
           "namespace": {
             "type": "string",
-            "description": "ROS2 namespace for the robot",
+            "description": "ROS2 topic namespace so cmd_vel and other root-level topics are published to /<namespace>/<topic> (e.g. robot3946b404c33e4aa39a8d16deb1c5c593 → /robot3946.../cmd_vel). Required if the robot base subscribes to a namespaced cmd_vel.",
+            "default": ""
+          },
+          "cameraTopic": {
+            "type": "string",
+            "description": "Camera topic for what do you see and default for teleop",
             "default": ""
           }
+        }
+      },
+      "teleop": {
+        "type": "object",
+        "description": "Teleop web app: camera and twist controls",
+        "properties": {
+          "cameraTopic": { "type": "string", "default": "" },
+          "cameraTopics": {
+            "type": "array",
+            "items": { "type": "object", "properties": { "topic": { "type": "string" }, "label": { "type": "string" } } },
+            "default": []
+          },
+          "cmdVelTopic": { "type": "string", "default": "" },
+          "speedDefault": { "type": "number", "description": "Default linear speed (m/s) for teleop", "default": 0.3, "minimum": 0, "maximum": 2 },
+          "cameraPollMs": { "type": "number", "default": 150, "minimum": 50, "maximum": 2000 }
         }
       },
       "safety": {
@@ -128,13 +169,38 @@
             }
           }
         }
+      },
+      "followMe": {
+        "type": "object",
+        "description": "Native Follow Me: depth (and optional Ollama) + cmd_vel. Default is depth-only (no Qwen).",
+        "properties": {
+          "useOllama": { "type": "boolean", "description": "If false (default), use depth only—no Ollama. Set true to use Qwen for person detection and left/right steering.", "default": false },
+          "ollamaUrl": { "type": "string", "description": "Ollama API URL (used when useOllama is true)", "default": "http://localhost:11434" },
+          "vlmModel": { "type": "string", "description": "Vision model when useOllama is true (e.g. qwen3-vl:2b)", "default": "qwen3-vl:2b" },
+          "cameraTopic": { "type": "string", "description": "ROS2 camera topic", "default": "/camera/image_raw/compressed" },
+          "cameraMessageType": { "type": "string", "enum": ["CompressedImage", "Image"], "default": "CompressedImage" },
+          "cmdVelTopic": { "type": "string", "description": "Override cmd_vel topic (e.g. /robot3946.../cmd_vel). Empty = use robot.namespace + /cmd_vel", "default": "" },
+          "targetDistance": { "type": "number", "description": "Follow distance (m)", "default": 0.5 },
+          "rateHz": { "type": "number", "description": "Loop rate (1–15)", "default": 5 },
+          "minLinearVelocity": { "type": "number", "description": "Min linear speed (m/s) so base moves (e.g. 0.3)", "default": 0.3 },
+          "depthTopic": { "type": "string", "description": "Optional depth topic (RealSense) for real distance vs targetDistance. Empty = VLM distance_hint only.", "default": "" },
+          "visionCallbackUrl": { "type": "string", "description": "Optional HTTP URL for human detection (e.g. OpenAI proxy). POST { \"image\": \"<base64>\" }; expect JSON with person_visible, position?, distance_hint?. Distance for follow comes from RealSense depth.", "default": "" }
+        }
       }
     }
   },
   "uiHints": {
     "transport.mode": {
       "label": "Transport Mode",
-      "description": "How the plugin connects to ROS2: rosbridge (WebSocket), local (DDS), or webrtc (P2P)"
+      "description": "How the plugin connects to ROS2: rosbridge (WebSocket), local (DDS), webrtc (P2P), or zenoh (Mode D)"
+    },
+    "zenoh.routerEndpoint": {
+      "label": "Zenoh Router Endpoint",
+      "placeholder": "ws://localhost:10000"
+    },
+    "zenoh.domainId": {
+      "label": "Zenoh Domain ID",
+      "advanced": true
     },
     "rosbridge.url": {
       "label": "Rosbridge URL",
@@ -143,6 +209,11 @@
     "robot.name": {
       "label": "Robot Name",
       "placeholder": "Robot"
+    },
+    "robot.namespace": {
+      "label": "ROS2 Robot Namespace",
+      "description": "ROS2 topic namespace; e.g. robot-uuid gives topics like /robot-uuid/cmd_vel",
+      "placeholder": ""
     },
     "safety.maxLinearVelocity": {
       "label": "Max Linear Velocity (m/s)",
@@ -155,6 +226,50 @@
     "safety.workspaceLimits": {
       "label": "Workspace Boundary Limits",
       "advanced": true
+    },
+    "followMe.useOllama": {
+      "label": "Use Ollama for Follow Me",
+      "description": "If off (default), Follow Me uses depth only—no Qwen. Turn on to use Ollama for person detection and left/right steering."
+    },
+    "followMe.ollamaUrl": {
+      "label": "Ollama URL",
+      "description": "For Follow Me when Use Ollama is on. e.g. http://localhost:11434",
+      "placeholder": "http://localhost:11434"
+    },
+    "followMe.vlmModel": {
+      "label": "VLM Model",
+      "description": "Vision model for person detection (e.g. qwen3-vl:2b or qwen2-vl:7b)",
+      "placeholder": "qwen3-vl:2b"
+    },
+    "followMe.cameraTopic": {
+      "label": "Camera Topic",
+      "description": "ROS2 camera topic for Follow Me",
+      "placeholder": "/camera/image_raw/compressed"
+    },
+    "followMe.cmdVelTopic": {
+      "label": "Follow Me cmd_vel topic",
+      "description": "Exact topic for velocity commands (e.g. /robot3946b404c33e4aa39a8d16deb1c5c593/cmd_vel). Overrides robot.namespace if set.",
+      "placeholder": "/robot3946b404c33e4aa39a8d16deb1c5c593/cmd_vel"
+    },
+    "followMe.targetDistance": {
+      "label": "Follow Distance (m)",
+      "description": "Target distance to keep behind person (default 0.5). Use depth topic for real distance.",
+      "advanced": true
+    },
+    "followMe.minLinearVelocity": {
+      "label": "Min Linear Velocity (m/s)",
+      "description": "Minimum forward/back speed so the base moves (many need ~0.3)",
+      "advanced": true
+    },
+    "followMe.depthTopic": {
+      "label": "Follow Me depth topic",
+      "description": "RealSense depth topic for real distance (e.g. /camera/camera/depth/image_rect_raw). Empty = use default.",
+      "placeholder": "/camera/camera/depth/image_rect_raw"
+    },
+    "followMe.visionCallbackUrl": {
+      "label": "Follow Me vision callback URL",
+      "description": "Optional: HTTP endpoint for human detection (e.g. proxy that calls OpenAI). POST body: { \"image\": \"<base64>\" }. Response: JSON with person_visible, position?, distance_hint?. Distance for follow uses RealSense depth.",
+      "placeholder": "https://your-server/detect"
     }
   }
 }

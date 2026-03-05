@@ -1,12 +1,14 @@
 import { Type } from "@sinclair/typebox";
 import type { OpenClawPluginApi } from "../plugin-api.js";
+import type { RosClawConfig } from "../config.js";
+import { toNamespacedTopic } from "../topic-utils.js";
 import { getTransport } from "../service.js";
 
 /**
  * Register the ros2_action_goal tool with the AI agent.
  * Sends action goals with progress feedback streaming.
  */
-export function registerActionTool(api: OpenClawPluginApi): void {
+export function registerActionTool(api: OpenClawPluginApi, config: RosClawConfig): void {
   api.registerTool({
     name: "ros2_action_goal",
     label: "ROS2 Action Goal",
@@ -22,7 +24,8 @@ export function registerActionTool(api: OpenClawPluginApi): void {
     }),
 
     async execute(_toolCallId, params) {
-      const action = params["action"] as string;
+      const rawAction = params["action"] as string;
+      const action = toNamespacedTopic(config, rawAction);
       const actionType = params["actionType"] as string;
       const goal = params["goal"] as Record<string, unknown>;
 

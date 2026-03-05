@@ -12,6 +12,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@eclipse-zenoh/zenoh-ts": "^1.7.2",
+    "@foxglove/cdr": "^3.5.0",
     "@sinclair/typebox": "^0.34.0",
     "node-datachannel": "^0.12.0",
     "ws": "^8.18.0",
@@ -27,7 +29,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/PlaiPin/rosclaw.git",
+    "url": "https://github.com/chrismatthieu/rosclaw.git",
     "directory": "extensions/openclaw-plugin"
   },
   "author": "PlaiPin",
