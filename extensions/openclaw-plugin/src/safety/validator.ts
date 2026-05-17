@@ -119,9 +119,37 @@ function getRosOperation(
     case "ros2_list_topics":
     case "ros2_list_services":
     case "ros2_list_actions":
+    case "ros2_list_nodes":
+    case "ros2_node_info":
+    case "ros2_interface_show":
+    case "ros2_message_schema":
+    case "ros2_service_schema":
+    case "ros2_action_schema":
+    case "ros2_validate_tool_call":
     case "ros2_transport_status":
       return {
         kind: "none",
+        write: false,
+      };
+
+    case "ros2_topic_info":
+      return {
+        kind: "topic",
+        target: stringParam(params, "topic"),
+        write: false,
+      };
+
+    case "ros2_service_info":
+      return {
+        kind: "service",
+        target: stringParam(params, "service"),
+        write: false,
+      };
+
+    case "ros2_action_info":
+      return {
+        kind: "action",
+        target: stringParam(params, "action"),
         write: false,
       };
 

@@ -123,6 +123,267 @@ server.registerTool(
 );
 
 server.registerTool(
+  "ros2_list_nodes",
+  {
+    title: "ROS2 List Nodes",
+    description:
+      "List available ROS2 nodes through the configured RosClaw transport.",
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+    },
+  },
+  async () => {
+    assertAllowed("ros2_list_nodes", {});
+    const ros = await getTransport();
+    const nodes = await ros.listNodes();
+
+    return jsonResult({ success: true, nodes });
+  },
+);
+
+server.registerTool(
+  "ros2_node_info",
+  {
+    title: "ROS2 Node Info",
+    description:
+      "Return the topics and services used by one ROS2 node without modifying robot state.",
+    inputSchema: z.object({
+      node: z.string().min(1).describe("Fully qualified ROS2 node name"),
+    }),
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+    },
+  },
+  async (params) => {
+    assertAllowed("ros2_node_info", params);
+    const ros = await getTransport();
+    const node = await ros.getNodeInfo(params.node);
+
+    return jsonResult({ success: true, node });
+  },
+);
+
+server.registerTool(
+  "ros2_topic_info",
+  {
+    title: "ROS2 Topic Info",
+    description:
+      "Return a ROS2 topic's type, publishers, subscribers, and QoS metadata when available.",
+    inputSchema: z.object({
+      topic: z.string().min(1).describe("ROS2 topic name, for example /odom"),
+    }),
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+    },
+  },
+  async (params) => {
+    assertAllowed("ros2_topic_info", params);
+    const ros = await getTransport();
+    const topic = await ros.getTopicInfo(params.topic);
+
+    return jsonResult({ success: true, topic });
+  },
+);
+
+server.registerTool(
+  "ros2_service_info",
+  {
+    title: "ROS2 Service Info",
+    description:
+      "Return a ROS2 service's type and provider nodes without modifying robot state.",
+    inputSchema: z.object({
+      service: z.string().min(1).describe("ROS2 service name"),
+    }),
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+    },
+  },
+  async (params) => {
+    assertAllowed("ros2_service_info", params);
+    const ros = await getTransport();
+    const service = await ros.getServiceInfo(params.service);
+
+    return jsonResult({ success: true, service });
+  },
+);
+
+server.registerTool(
+  "ros2_action_info",
+  {
+    title: "ROS2 Action Info",
+    description:
+      "Return a ROS2 action server's type and server metadata without modifying robot state.",
+    inputSchema: z.object({
+      action: z.string().min(1).describe("ROS2 action server name"),
+    }),
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+    },
+  },
+  async (params) => {
+    assertAllowed("ros2_action_info", params);
+    const ros = await getTransport();
+    const action = await ros.getActionInfo(params.action);
+
+    return jsonResult({ success: true, action });
+  },
+);
+
+server.registerTool(
+  "ros2_interface_show",
+  {
+    title: "ROS2 Interface Show",
+    description:
+      "Return the field schema for a ROS2 message, service, or action interface type.",
+    inputSchema: z.object({
+      type: z
+        .string()
+        .min(1)
+        .describe("ROS2 interface type, for example geometry_msgs/msg/Twist"),
+      kind: z
+        .enum(["message", "service", "action"])
+        .optional()
+        .describe("Optional interface kind override."),
+    }),
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+    },
+  },
+  async (params) => {
+    assertAllowed("ros2_interface_show", params);
+    const ros = await getTransport();
+    const schema = await showInterface(ros, params.type, params.kind);
+
+    return jsonResult({ success: true, ...schema });
+  },
+);
+
+server.registerTool(
+  "ros2_message_schema",
+  {
+    title: "ROS2 Message Schema",
+    description:
+      "Return the field schema for a ROS2 message type, including nested typedefs.",
+    inputSchema: z.object({
+      type: z
+        .string()
+        .min(1)
+        .describe("ROS2 message type, for example geometry_msgs/msg/Twist"),
+    }),
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+    },
+  },
+  async (params) => {
+    assertAllowed("ros2_message_schema", params);
+    const ros = await getTransport();
+    const schema = await ros.getMessageSchema(params.type);
+
+    return jsonResult({ success: true, schema });
+  },
+);
+
+server.registerTool(
+  "ros2_service_schema",
+  {
+    title: "ROS2 Service Schema",
+    description:
+      "Return request and response field schemas for a ROS2 service type.",
+    inputSchema: z.object({
+      type: z
+        .string()
+        .min(1)
+        .describe("ROS2 service type, for example rcl_interfaces/srv/GetParameters"),
+    }),
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+    },
+  },
+  async (params) => {
+    assertAllowed("ros2_service_schema", params);
+    const ros = await getTransport();
+    const schema = await ros.getServiceSchema(params.type);
+
+    return jsonResult({ success: true, schema });
+  },
+);
+
+server.registerTool(
+  "ros2_action_schema",
+  {
+    title: "ROS2 Action Schema",
+    description:
+      "Return goal, result, and feedback field schemas for a ROS2 action type.",
+    inputSchema: z.object({
+      type: z
+        .string()
+        .min(1)
+        .describe("ROS2 action type, for example nav2_msgs/action/NavigateToPose"),
+    }),
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+    },
+  },
+  async (params) => {
+    assertAllowed("ros2_action_schema", params);
+    const ros = await getTransport();
+    const schema = await ros.getActionSchema(params.type);
+
+    return jsonResult({ success: true, schema });
+  },
+);
+
+server.registerTool(
+  "ros2_validate_tool_call",
+  {
+    title: "ROS2 Validate Tool Call",
+    description:
+      "Dry-run RosClaw safety policy validation for a ROS tool call without executing it.",
+    inputSchema: z.object({
+      toolName: z
+        .string()
+        .min(1)
+        .describe("ROS MCP tool name, for example ros2_publish"),
+      params: z
+        .record(z.unknown())
+        .default({})
+        .describe("Tool parameters to validate."),
+    }),
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+    },
+  },
+  async ({ toolName, params }) => {
+    const violation = validateRosToolCall(toolName, params, config.safety);
+
+    return jsonResult({
+      allowed: !violation,
+      reason: violation ?? null,
+    });
+  },
+);
+
+server.registerTool(
   "ros2_subscribe_once",
   {
     title: "ROS2 Subscribe Once",
@@ -563,6 +824,47 @@ function subscribeOnce(
       reject(new Error(`Timeout waiting for message on ${topic}`));
     }, timeout);
   });
+}
+
+async function showInterface(
+  ros: RosTransport,
+  type: string,
+  kind?: "message" | "service" | "action",
+): Promise<Record<string, unknown>> {
+  const inferredKind = kind ?? inferInterfaceKind(type);
+  switch (inferredKind) {
+    case "message":
+      return {
+        kind: inferredKind,
+        schema: await ros.getMessageSchema(type),
+      };
+    case "service":
+      return {
+        kind: inferredKind,
+        schema: await ros.getServiceSchema(type),
+      };
+    case "action":
+      return {
+        kind: inferredKind,
+        schema: await ros.getActionSchema(type),
+      };
+  }
+}
+
+function inferInterfaceKind(type: string): "message" | "service" | "action" {
+  if (type.includes("/msg/")) {
+    return "message";
+  }
+  if (type.includes("/srv/")) {
+    return "service";
+  }
+  if (type.includes("/action/")) {
+    return "action";
+  }
+
+  throw new Error(
+    `Cannot infer interface kind from ${type}; pass kind as message, service, or action`,
+  );
 }
 
 function jsonResult(value: unknown) {

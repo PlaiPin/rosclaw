@@ -13,6 +13,14 @@ import type {
   TopicInfo,
   ServiceInfo,
   ActionInfo,
+  NodeInfo,
+  NodeDetails,
+  TopicDetails,
+  ServiceDetails,
+  ActionDetails,
+  MessageSchema,
+  ServiceSchema,
+  ActionSchema,
   MessageHandler,
 } from "../types.js";
 import { EntityCache } from "./entities.js";
@@ -309,6 +317,89 @@ export class LocalTransport implements RosTransport {
     return actions;
   }
 
+  async listNodes(): Promise<NodeInfo[]> {
+    this.ensureConnected();
+    return this.getNodeNames().map((name) => ({ name }));
+  }
+
+  async getNodeInfo(node: string): Promise<NodeDetails> {
+    this.ensureConnected();
+    const topics = await this.listTopics();
+    const services = await this.listServices();
+    return {
+      name: node,
+      subscribing: topics
+        .filter((topic) => this.topicHasNode(topic.name, node, "subscriber"))
+        .map((topic) => topic.name),
+      publishing: topics
+        .filter((topic) => this.topicHasNode(topic.name, node, "publisher"))
+        .map((topic) => topic.name),
+      services: services
+        .filter((service) => this.serviceHasNode(service.name, node))
+        .map((service) => service.name),
+    };
+  }
+
+  async getTopicInfo(topic: string): Promise<TopicDetails> {
+    this.ensureConnected();
+    const type = this.resolveTopicType(topic) ?? "";
+    const publishers = this.getTopicEndpointNodes(topic, "publisher");
+    const subscribers = this.getTopicEndpointNodes(topic, "subscriber");
+    const qosProfiles = [
+      ...this.getTopicEndpointQos(topic, "publisher"),
+      ...this.getTopicEndpointQos(topic, "subscriber"),
+    ];
+    return {
+      name: topic,
+      type,
+      publishers,
+      subscribers,
+      publisherCount: publishers.length,
+      subscriberCount: subscribers.length,
+      qosAvailable: qosProfiles.length > 0,
+      qosProfiles,
+    };
+  }
+
+  async getServiceInfo(service: string): Promise<ServiceDetails> {
+    this.ensureConnected();
+    const providers = this.getNodeNames().filter((node) => this.serviceHasNode(service, node));
+    return {
+      name: service,
+      type: this.resolveServiceType(service) ?? "",
+      providers,
+      providerCount: providers.length,
+    };
+  }
+
+  async getActionInfo(action: string): Promise<ActionDetails> {
+    const actions = await this.listActions();
+    const match = actions.find((item) => item.name === action);
+    return {
+      name: action,
+      type: match?.type ?? "",
+      servers: match ? [match.name] : [],
+    };
+  }
+
+  async getMessageSchema(type: string): Promise<MessageSchema> {
+    throw new Error(
+      `Message schema introspection for ${type} is not supported by LocalTransport yet`,
+    );
+  }
+
+  async getServiceSchema(type: string): Promise<ServiceSchema> {
+    throw new Error(
+      `Service schema introspection for ${type} is not supported by LocalTransport yet`,
+    );
+  }
+
+  async getActionSchema(type: string): Promise<ActionSchema> {
+    throw new Error(
+      `Action schema introspection for ${type} is not supported by LocalTransport yet`,
+    );
+  }
+
   // --- Private helpers ---
 
   private setStatus(status: ConnectionStatus): void {
@@ -348,6 +439,83 @@ export class LocalTransport implements RosTransport {
     return entry?.types[0];
   }
 
+  private getNodeNames(): string[] {
+    const getNodeNames = this.node?.getNodeNames;
+    if (typeof getNodeNames === "function") {
+      return getNodeNames.call(this.node) as string[];
+    }
+
+    const getNodeNamesAndNamespaces = this.node?.getNodeNamesAndNamespaces;
+    if (typeof getNodeNamesAndNamespaces === "function") {
+      const entries = getNodeNamesAndNamespaces.call(this.node) as Array<{
+        name?: string;
+        namespace?: string;
+      }>;
+      return entries.map((entry) => qualifyNodeName(entry.namespace, entry.name));
+    }
+
+    return [];
+  }
+
+  private topicHasNode(
+    topic: string,
+    node: string,
+    endpointKind: "publisher" | "subscriber",
+  ): boolean {
+    return this.getTopicEndpointNodes(topic, endpointKind).includes(node);
+  }
+
+  private serviceHasNode(service: string, node: string): boolean {
+    const getServiceServerInfo = this.node?.getServiceServerInfo;
+    if (typeof getServiceServerInfo !== "function") {
+      return false;
+    }
+    const endpoints = getServiceServerInfo.call(this.node, service) as Array<{
+      nodeName?: string;
+      nodeNamespace?: string;
+    }>;
+    return endpoints
+      .map((endpoint) => qualifyNodeName(endpoint.nodeNamespace, endpoint.nodeName))
+      .includes(node);
+  }
+
+  private getTopicEndpointNodes(
+    topic: string,
+    endpointKind: "publisher" | "subscriber",
+  ): string[] {
+    const methodName =
+      endpointKind === "publisher" ? "getPublishersInfoByTopic" : "getSubscriptionsInfoByTopic";
+    const method = this.node?.[methodName];
+    if (typeof method !== "function") {
+      return [];
+    }
+    const endpoints = method.call(this.node, topic) as Array<{
+      nodeName?: string;
+      nodeNamespace?: string;
+    }>;
+    return Array.from(
+      new Set(
+        endpoints.map((endpoint) => qualifyNodeName(endpoint.nodeNamespace, endpoint.nodeName)),
+      ),
+    );
+  }
+
+  private getTopicEndpointQos(
+    topic: string,
+    endpointKind: "publisher" | "subscriber",
+  ): unknown[] {
+    const methodName =
+      endpointKind === "publisher" ? "getPublishersInfoByTopic" : "getSubscriptionsInfoByTopic";
+    const method = this.node?.[methodName];
+    if (typeof method !== "function") {
+      return [];
+    }
+    const endpoints = method.call(this.node, topic) as Array<{ qosProfile?: unknown }>;
+    return endpoints
+      .map((endpoint) => endpoint.qosProfile)
+      .filter((qosProfile): qosProfile is unknown => qosProfile !== undefined);
+  }
+
   /**
    * Wrap rclnodejs callback-based sendRequest in a Promise with timeout.
    */
@@ -372,4 +540,10 @@ export class LocalTransport implements RosTransport {
       }
     });
   }
+}
+
+function qualifyNodeName(namespace: string | undefined, name: string | undefined): string {
+  const safeName = name ?? "";
+  const safeNamespace = namespace && namespace !== "/" ? namespace : "";
+  return `${safeNamespace}/${safeName}`.replace(/\/+/g, "/");
 }
