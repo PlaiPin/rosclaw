@@ -3,13 +3,42 @@
   "version": "0.0.1",
   "type": "module",
   "description": "OpenClaw extension for ROS2 robot control via natural language",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./config": {
+      "import": "./dist/config.js",
+      "types": "./dist/config.d.ts"
+    },
+    "./safety/validator": {
+      "import": "./dist/safety/validator.js",
+      "types": "./dist/safety/validator.d.ts"
+    },
+    "./transport/factory": {
+      "import": "./dist/transport/factory.js",
+      "types": "./dist/transport/factory.d.ts"
+    },
+    "./transport/transport": {
+      "import": "./dist/transport/transport.js",
+      "types": "./dist/transport/transport.d.ts"
+    },
+    "./transport/types": {
+      "import": "./dist/transport/types.js",
+      "types": "./dist/transport/types.d.ts"
+    }
+  },
   "openclaw": {
     "extensions": [
       "./src/index.ts"
     ]
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
   },
   "dependencies": {
     "@sinclair/typebox": "^0.34.0",
