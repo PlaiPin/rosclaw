@@ -109,7 +109,17 @@ function getRosOperation(
         write: true,
       };
 
+    case "ros2_cancel_action_goal":
+      return {
+        kind: "action",
+        target: stringParam(params, "action"),
+        write: true,
+      };
+
     case "ros2_list_topics":
+    case "ros2_list_services":
+    case "ros2_list_actions":
+    case "ros2_transport_status":
       return {
         kind: "none",
         write: false,

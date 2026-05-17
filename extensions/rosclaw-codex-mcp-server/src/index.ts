@@ -81,6 +81,48 @@ server.registerTool(
 );
 
 server.registerTool(
+  "ros2_list_services",
+  {
+    title: "ROS2 List Services",
+    description:
+      "List available ROS2 services and service types through the configured RosClaw transport.",
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+    },
+  },
+  async () => {
+    assertAllowed("ros2_list_services", {});
+    const ros = await getTransport();
+    const services = await ros.listServices();
+
+    return jsonResult({ success: true, services });
+  },
+);
+
+server.registerTool(
+  "ros2_list_actions",
+  {
+    title: "ROS2 List Actions",
+    description:
+      "List available ROS2 action servers and action types through the configured RosClaw transport.",
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+    },
+  },
+  async () => {
+    assertAllowed("ros2_list_actions", {});
+    const ros = await getTransport();
+    const actions = await ros.listActions();
+
+    return jsonResult({ success: true, actions });
+  },
+);
+
+server.registerTool(
   "ros2_subscribe_once",
   {
     title: "ROS2 Subscribe Once",
@@ -236,6 +278,30 @@ server.registerTool(
 );
 
 server.registerTool(
+  "ros2_transport_status",
+  {
+    title: "ROS2 Transport Status",
+    description:
+      "Return the current RosClaw transport connection status without modifying robot state.",
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+    },
+  },
+  async () => {
+    assertAllowed("ros2_transport_status", {});
+    const ros = await getTransport();
+
+    return jsonResult({
+      success: true,
+      mode: config.transport.mode,
+      status: ros.getStatus(),
+    });
+  },
+);
+
+server.registerTool(
   "ros2_service_call",
   {
     title: "ROS2 Service Call",
@@ -267,6 +333,33 @@ server.registerTool(
       success: response.result,
       service: params.service,
       response: response.values,
+    });
+  },
+);
+
+server.registerTool(
+  "ros2_cancel_action_goal",
+  {
+    title: "ROS2 Cancel Action Goal",
+    description:
+      "Cancel an in-progress ROS2 action goal after RosClaw safety policy validation.",
+    inputSchema: z.object({
+      action: z.string().min(1).describe("ROS2 action server name"),
+    }),
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: true,
+    },
+  },
+  async (params) => {
+    assertAllowed("ros2_cancel_action_goal", params);
+    const ros = await getTransport();
+    await ros.cancelActionGoal(params.action);
+
+    return jsonResult({
+      success: true,
+      action: params.action,
+      cancelled: true,
     });
   },
 );
