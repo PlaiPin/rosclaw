@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "rosclaw": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/bin/rosclaw-mcp.mjs"],
+      "env": {
+        "ROSCLAW_MCP_SERVER_PATH": "${CLAUDE_PROJECT_DIR}/extensions/rosclaw-codex-mcp-server/dist/index.js",
+        "ROSCLAW_TRANSPORT_MODE": "rosbridge",
+        "ROSCLAW_ROSBRIDGE_URL": "${user_config.rosbridge_url}",
+        "ROSCLAW_CONFIG_JSON": "{\"safety\":{\"readonlyMode\":${user_config.readonly_mode},\"allowedTopics\":[],\"allowedServices\":[],\"allowedActions\":[]}}"
+      }
+    }
+  }
+}

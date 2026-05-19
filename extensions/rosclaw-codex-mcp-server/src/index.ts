@@ -13,7 +13,7 @@ const config = readRosClawConfig();
 
 const server = new McpServer(
   {
-    name: "rosclaw-codex",
+    name: "rosclaw",
     version: "0.0.1",
   },
   {
@@ -661,7 +661,7 @@ server.registerTool(
 async function main(): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("RosClaw Codex MCP server running on stdio");
+  console.error("RosClaw MCP server running on stdio");
 }
 
 process.on("SIGINT", async () => {
@@ -677,7 +677,7 @@ process.on("SIGTERM", async () => {
 });
 
 main().catch((error: unknown) => {
-  console.error("Fatal error in RosClaw Codex MCP server:", error);
+  console.error("Fatal error in RosClaw MCP server:", error);
   process.exit(1);
 });
 
@@ -709,7 +709,7 @@ function readTransportConfig(): TransportConfig {
 
   if (mode !== "rosbridge") {
     throw new Error(
-      `Unsupported ROSCLAW_TRANSPORT_MODE for the first Codex MCP phase: ${mode}`,
+      `Unsupported ROSCLAW_TRANSPORT_MODE for this MCP server phase: ${mode}`,
     );
   }
 

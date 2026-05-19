@@ -2,7 +2,7 @@
   "name": "@rosclaw/rosclaw-codex-mcp-server",
   "version": "0.0.1",
   "type": "module",
-  "description": "Codex MCP stdio server for controlled RosClaw ROS2 access",
+  "description": "MCP stdio server for controlled RosClaw ROS2 access",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
