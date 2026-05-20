@@ -110,16 +110,69 @@
           "maxLinearVelocity": {
             "type": "number",
             "description": "Maximum linear velocity (m/s)",
+            "minimum": 0,
             "default": 1.0
           },
           "maxAngularVelocity": {
             "type": "number",
             "description": "Maximum angular velocity (rad/s)",
+            "minimum": 0,
             "default": 1.5
+          },
+          "readonlyMode": {
+            "type": "boolean",
+            "description": "Block ROS write operations while still allowing read-only discovery and subscriptions",
+            "default": false
+          },
+          "allowedTopics": {
+            "type": "array",
+            "description": "Allowed ROS topic patterns for publish/subscribe/camera tools. Supports '*' wildcards; leave empty to allow all topics.",
+            "items": { "type": "string" },
+            "default": [
+              "/cmd_vel",
+              "*/cmd_vel",
+              "/goal_pose",
+              "*/goal_pose",
+              "/odom",
+              "*/odom",
+              "/scan",
+              "*/scan",
+              "/camera/*",
+              "*/camera/*",
+              "/battery_state",
+              "*/battery_state",
+              "/diagnostics",
+              "*/diagnostics",
+              "/rosclaw/*"
+            ]
+          },
+          "allowedServices": {
+            "type": "array",
+            "description": "Allowed ROS service patterns for service and parameter tools. Supports '*' wildcards; leave empty to allow all services.",
+            "items": { "type": "string" },
+            "default": ["/rosapi/*", "/rosclaw/*", "*/get_parameters"]
+          },
+          "allowedActions": {
+            "type": "array",
+            "description": "Allowed ROS action server patterns. Supports '*' wildcards; leave empty to allow all actions.",
+            "items": { "type": "string" },
+            "default": ["/navigate_to_pose", "*/navigate_to_pose"]
+          },
+          "blockedTopics": {
+            "type": "array",
+            "description": "Blocked ROS topic patterns. Blocks take precedence over allowedTopics.",
+            "items": { "type": "string" },
+            "default": ["/rosout", "/parameter_events"]
+          },
+          "requireConfirmationFor": {
+            "type": "array",
+            "description": "Topic, service, or action patterns that should be blocked until a higher-level confirmation flow is available. Supports bare patterns and kind prefixes like topic:/cmd_vel.",
+            "items": { "type": "string" },
+            "default": []
           },
           "workspaceLimits": {
             "type": "object",
-            "description": "Workspace boundary limits (meters)",
+            "description": "Workspace boundary limits for goal or navigation targets (meters)",
             "properties": {
               "xMin": { "type": "number", "default": -10 },
               "xMax": { "type": "number", "default": 10 },
@@ -150,6 +203,30 @@
     },
     "safety.maxAngularVelocity": {
       "label": "Max Angular Velocity (rad/s)",
+      "advanced": true
+    },
+    "safety.readonlyMode": {
+      "label": "Read-only Mode",
+      "advanced": true
+    },
+    "safety.allowedTopics": {
+      "label": "Allowed Topics",
+      "advanced": true
+    },
+    "safety.allowedServices": {
+      "label": "Allowed Services",
+      "advanced": true
+    },
+    "safety.allowedActions": {
+      "label": "Allowed Actions",
+      "advanced": true
+    },
+    "safety.blockedTopics": {
+      "label": "Blocked Topics",
+      "advanced": true
+    },
+    "safety.requireConfirmationFor": {
+      "label": "Require Confirmation For",
       "advanced": true
     },
     "safety.workspaceLimits": {

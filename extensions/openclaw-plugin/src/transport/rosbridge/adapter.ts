@@ -12,6 +12,15 @@ import type {
   TopicInfo,
   ServiceInfo,
   ActionInfo,
+  NodeInfo,
+  NodeDetails,
+  TopicDetails,
+  ServiceDetails,
+  ActionDetails,
+  RosTypeDef,
+  MessageSchema,
+  ServiceSchema,
+  ActionSchema,
   MessageHandler,
 } from "../types.js";
 import { RosbridgeClient } from "./client.js";
@@ -104,7 +113,7 @@ export class RosbridgeTransport implements RosTransport {
       this.client,
       "/rosapi/topics",
       {},
-      "rosapi/srv/Topics",
+      "rosapi_msgs/srv/Topics",
     );
     const topics = (response.values?.["topics"] as string[]) ?? [];
     const types = (response.values?.["types"] as string[]) ?? [];
@@ -116,16 +125,32 @@ export class RosbridgeTransport implements RosTransport {
       this.client,
       "/rosapi/services",
       {},
-      "rosapi/srv/Services",
+      "rosapi_msgs/srv/Services",
     );
     const services = (response.values?.["services"] as string[]) ?? [];
-    const types = (response.values?.["types"] as string[]) ?? [];
-    return services.map((name, i) => ({ name, type: types[i] ?? "" }));
+    return Promise.all(
+      services.map(async (name) => ({ name, type: await this.getServiceType(name) })),
+    );
   }
 
   async listActions(): Promise<ActionInfo[]> {
-    // rosapi has no built-in action listing. Heuristic: action servers expose
-    // topics matching */_action/feedback. Extract action names from that pattern.
+    const response = await callService(
+      this.client,
+      "/rosapi/action_servers",
+      {},
+      "rosapi_msgs/srv/GetActionServers",
+    );
+    const actionServers = stringArray(response.values?.["action_servers"]);
+    if (actionServers.length > 0) {
+      return Promise.all(
+        actionServers.map(async (name) => ({
+          name,
+          type: await this.getActionType(name),
+        })),
+      );
+    }
+
+    // Fallback for rosapi variants that do not expose /rosapi/action_servers.
     const topics = await this.listTopics();
     const actions: ActionInfo[] = [];
     const feedbackSuffix = "/_action/feedback";
@@ -145,4 +170,205 @@ export class RosbridgeTransport implements RosTransport {
 
     return actions;
   }
+
+  async listNodes(): Promise<NodeInfo[]> {
+    const response = await callService(
+      this.client,
+      "/rosapi/nodes",
+      {},
+      "rosapi_msgs/srv/Nodes",
+    );
+    return stringArray(response.values?.["nodes"]).map((name) => ({ name }));
+  }
+
+  async getNodeInfo(node: string): Promise<NodeDetails> {
+    const response = await callService(
+      this.client,
+      "/rosapi/node_details",
+      { node },
+      "rosapi_msgs/srv/NodeDetails",
+    );
+    return {
+      name: node,
+      subscribing: stringArray(response.values?.["subscribing"]),
+      publishing: stringArray(response.values?.["publishing"]),
+      services: stringArray(response.values?.["services"]),
+    };
+  }
+
+  async getTopicInfo(topic: string): Promise<TopicDetails> {
+    const [typeResponse, publishersResponse, subscribersResponse] = await Promise.all([
+      callService(this.client, "/rosapi/topic_type", { topic }, "rosapi_msgs/srv/TopicType"),
+      callService(this.client, "/rosapi/publishers", { topic }, "rosapi_msgs/srv/Publishers"),
+      callService(this.client, "/rosapi/subscribers", { topic }, "rosapi_msgs/srv/Subscribers"),
+    ]);
+    const publishers = stringArray(publishersResponse.values?.["publishers"]);
+    const subscribers = stringArray(subscribersResponse.values?.["subscribers"]);
+    return {
+      name: topic,
+      type: stringValue(typeResponse.values?.["type"]),
+      publishers,
+      subscribers,
+      publisherCount: publishers.length,
+      subscriberCount: subscribers.length,
+      qosAvailable: false,
+      qosProfiles: [],
+    };
+  }
+
+  async getServiceInfo(service: string): Promise<ServiceDetails> {
+    const [type, nodeResponse] = await Promise.all([
+      this.getServiceType(service),
+      callService(
+        this.client,
+        "/rosapi/service_node",
+        { service },
+        "rosapi_msgs/srv/ServiceNode",
+      ),
+    ]);
+    const provider = stringValue(nodeResponse.values?.["node"]);
+    const providers = provider ? [provider] : [];
+    return {
+      name: service,
+      type,
+      providers,
+      providerCount: providers.length,
+    };
+  }
+
+  async getActionInfo(action: string): Promise<ActionDetails> {
+    const type = await this.getActionType(action);
+    return {
+      name: action,
+      type,
+      servers: type ? [action] : [],
+    };
+  }
+
+  async getMessageSchema(type: string): Promise<MessageSchema> {
+    const response = await callService(
+      this.client,
+      "/rosapi/message_details",
+      { type },
+      "rosapi_msgs/srv/MessageDetails",
+    );
+    return { type, typedefs: typeDefs(response.values?.["typedefs"]) };
+  }
+
+  async getServiceSchema(type: string): Promise<ServiceSchema> {
+    const [requestResponse, responseResponse] = await Promise.all([
+      callService(
+        this.client,
+        "/rosapi/service_request_details",
+        { type },
+        "rosapi_msgs/srv/ServiceRequestDetails",
+      ),
+      callService(
+        this.client,
+        "/rosapi/service_response_details",
+        { type },
+        "rosapi_msgs/srv/ServiceResponseDetails",
+      ),
+    ]);
+    return {
+      type,
+      request: typeDefs(requestResponse.values?.["typedefs"]),
+      response: typeDefs(responseResponse.values?.["typedefs"]),
+    };
+  }
+
+  async getActionSchema(type: string): Promise<ActionSchema> {
+    const [goalResponse, resultResponse, feedbackResponse] = await Promise.all([
+      callService(
+        this.client,
+        "/rosapi/action_goal_details",
+        { type },
+        "rosapi_msgs/srv/ActionGoalDetails",
+      ),
+      callService(
+        this.client,
+        "/rosapi/action_result_details",
+        { type },
+        "rosapi_msgs/srv/ActionResultDetails",
+      ),
+      callService(
+        this.client,
+        "/rosapi/action_feedback_details",
+        { type },
+        "rosapi_msgs/srv/ActionFeedbackDetails",
+      ),
+    ]);
+    return {
+      type,
+      goal: typeDefs(goalResponse.values?.["typedefs"]),
+      result: typeDefs(resultResponse.values?.["typedefs"]),
+      feedback: typeDefs(feedbackResponse.values?.["typedefs"]),
+    };
+  }
+
+  private async getActionType(action: string): Promise<string> {
+    const response = await callService(
+      this.client,
+      "/rosapi/action_type",
+      { action },
+      "rosapi_msgs/srv/ActionType",
+    );
+    return stringValue(response.values?.["type"]);
+  }
+
+  private async getServiceType(service: string): Promise<string> {
+    const response = await callService(
+      this.client,
+      "/rosapi/service_type",
+      { service },
+      "rosapi_msgs/srv/ServiceType",
+    );
+    return stringValue(response.values?.["type"]);
+  }
+}
+
+function stringValue(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
+}
+
+function typeDefs(value: unknown): RosTypeDef[] {
+  return Array.isArray(value)
+    ? value.filter(isTypeDef).map((item) => ({
+        type: item.type,
+        fieldnames: item.fieldnames,
+        fieldtypes: item.fieldtypes,
+        fieldarraylen: item.fieldarraylen,
+        examples: item.examples,
+        constnames: item.constnames,
+        constvalues: item.constvalues,
+      }))
+    : [];
+}
+
+function isTypeDef(value: unknown): value is RosTypeDef {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate["type"] === "string" &&
+    isStringArray(candidate["fieldnames"]) &&
+    isStringArray(candidate["fieldtypes"]) &&
+    isNumberArray(candidate["fieldarraylen"]) &&
+    isStringArray(candidate["examples"]) &&
+    isStringArray(candidate["constnames"]) &&
+    isStringArray(candidate["constvalues"])
+  );
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function isNumberArray(value: unknown): value is number[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "number");
 }

@@ -11,6 +11,14 @@ import type {
   TopicInfo,
   ServiceInfo,
   ActionInfo,
+  NodeInfo,
+  NodeDetails,
+  TopicDetails,
+  ServiceDetails,
+  ActionDetails,
+  MessageSchema,
+  ServiceSchema,
+  ActionSchema,
   MessageHandler,
 } from "./types.js";
 
@@ -67,4 +75,28 @@ export interface RosTransport {
 
   /** List all available ROS2 action servers. */
   listActions(): Promise<ActionInfo[]>;
+
+  /** List all available ROS2 nodes. */
+  listNodes(): Promise<NodeInfo[]>;
+
+  /** Return a node's topic and service graph details. */
+  getNodeInfo(node: string): Promise<NodeDetails>;
+
+  /** Return topic type, publishers, subscribers, and QoS metadata when available. */
+  getTopicInfo(topic: string): Promise<TopicDetails>;
+
+  /** Return service type and provider nodes. */
+  getServiceInfo(service: string): Promise<ServiceDetails>;
+
+  /** Return action server type and provider nodes when available. */
+  getActionInfo(action: string): Promise<ActionDetails>;
+
+  /** Return message field schema for a ROS interface type. */
+  getMessageSchema(type: string): Promise<MessageSchema>;
+
+  /** Return request and response field schema for a ROS service type. */
+  getServiceSchema(type: string): Promise<ServiceSchema>;
+
+  /** Return goal, result, and feedback field schema for a ROS action type. */
+  getActionSchema(type: string): Promise<ActionSchema>;
 }

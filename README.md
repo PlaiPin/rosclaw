@@ -45,11 +45,11 @@ Robots: Nav2, MoveIt2, cameras, sensors
 
 ```
 rosclaw/
-├── packages/
-│   └── rosbridge-client/         # @rosclaw/rosbridge-client — TypeScript rosbridge WebSocket client
 ├── extensions/
 │   ├── openclaw-plugin/          # @rosclaw/openclaw-plugin — Core OpenClaw extension
-│   └── openclaw-canvas/          # @rosclaw/openclaw-canvas — Real-time dashboard (Phase 3)
+│   ├── openclaw-canvas/          # @rosclaw/openclaw-canvas — Real-time dashboard (Phase 3)
+│   ├── rosclaw-codex-mcp-server/ # MCP server for agent access to ROS2
+│   └── rosclaw-claude-plugin/    # Claude Code plugin wrapper for the MCP server
 ├── ros2_ws/src/
 │   ├── rosclaw_discovery/        # ROS2 capability auto-discovery node
 │   └── rosclaw_msgs/             # Custom ROS2 message/service definitions
@@ -94,9 +94,10 @@ Send a message to your robot:
 
 | Package | Description |
 |---|---|
-| [`@rosclaw/rosbridge-client`](packages/rosbridge-client/) | Standalone TypeScript client for the rosbridge WebSocket protocol |
 | [`@rosclaw/openclaw-plugin`](extensions/openclaw-plugin/) | OpenClaw extension: tools, hooks, skills, commands for ROS2 control |
 | [`@rosclaw/openclaw-canvas`](extensions/openclaw-canvas/) | Real-time robot dashboard (Phase 3) |
+| [`@rosclaw/rosclaw-codex-mcp-server`](extensions/rosclaw-codex-mcp-server/) | MCP stdio server for controlled ROS2 access |
+| [`rosclaw-claude-plugin`](extensions/rosclaw-claude-plugin/) | Claude Code plugin that exposes the RosClaw MCP server |
 | [`rosclaw_discovery`](ros2_ws/src/rosclaw_discovery/) | ROS2 Python node for capability auto-discovery |
 | [`rosclaw_msgs`](ros2_ws/src/rosclaw_msgs/) | Custom ROS2 message/service definitions |
 

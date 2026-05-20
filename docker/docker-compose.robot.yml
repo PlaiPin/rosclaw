@@ -8,8 +8,8 @@ services:
   # ROS2 stack (no rosbridge needed — agent talks directly to DDS)
   ros2:
     build:
-      context: .
-      dockerfile: Dockerfile.ros2
+      context: ..
+      dockerfile: docker/Dockerfile.ros2
     image: rosclaw/ros2:latest
     environment:
       - ROS_DOMAIN_ID=0
@@ -20,8 +20,8 @@ services:
   # RosClaw agent node (connects to signaling server, bridges to DDS)
   rosclaw-agent:
     build:
-      context: .
-      dockerfile: Dockerfile.ros2
+      context: ..
+      dockerfile: docker/Dockerfile.ros2
     image: rosclaw/ros2:latest
     command: ["ros2", "run", "rosclaw_agent", "agent_node"]
     environment:

@@ -76,6 +76,69 @@ export interface ActionInfo {
   type: string;
 }
 
+export interface NodeInfo {
+  name: string;
+}
+
+export interface NodeDetails {
+  name: string;
+  subscribing: string[];
+  publishing: string[];
+  services: string[];
+}
+
+export interface TopicDetails {
+  name: string;
+  type: string;
+  publishers: string[];
+  subscribers: string[];
+  publisherCount: number;
+  subscriberCount: number;
+  qosAvailable: boolean;
+  qosProfiles: unknown[];
+}
+
+export interface ServiceDetails {
+  name: string;
+  type: string;
+  providers: string[];
+  providerCount: number;
+}
+
+export interface ActionDetails {
+  name: string;
+  type: string;
+  servers: string[];
+}
+
+export interface RosTypeDef {
+  type: string;
+  fieldnames: string[];
+  fieldtypes: string[];
+  fieldarraylen: number[];
+  examples: string[];
+  constnames: string[];
+  constvalues: string[];
+}
+
+export interface MessageSchema {
+  type: string;
+  typedefs: RosTypeDef[];
+}
+
+export interface ServiceSchema {
+  type: string;
+  request: RosTypeDef[];
+  response: RosTypeDef[];
+}
+
+export interface ActionSchema {
+  type: string;
+  goal: RosTypeDef[];
+  result: RosTypeDef[];
+  feedback: RosTypeDef[];
+}
+
 // --- Transport Configuration ---
 
 export interface RosbridgeTransportConfig {

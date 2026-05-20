@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "rosclaw",
+  "version": "0.0.1",
+  "description": "Claude Code plugin for controlled ROS2 access through RosClaw MCP tools.",
+  "author": {
+    "name": "PlaiPin"
+  },
+  "repository": "https://github.com/PlaiPin/rosclaw",
+  "license": "Apache-2.0",
+  "keywords": ["ros2", "robotics", "mcp", "claude-code"],
+  "userConfig": {
+    "rosbridge_url": {
+      "type": "string",
+      "title": "rosbridge URL",
+      "description": "WebSocket URL for rosbridge_server.",
+      "default": "ws://localhost:9090"
+    },
+    "readonly_mode": {
+      "type": "boolean",
+      "title": "Read-only mode",
+      "description": "Block write-capable ROS operations until disabled intentionally.",
+      "default": true
+    }
+  }
+}

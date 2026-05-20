@@ -13,6 +13,15 @@ import type {
   TopicInfo,
   ServiceInfo,
   ActionInfo,
+  NodeInfo,
+  NodeDetails,
+  TopicDetails,
+  ServiceDetails,
+  ActionDetails,
+  RosTypeDef,
+  MessageSchema,
+  ServiceSchema,
+  ActionSchema,
   MessageHandler,
   RTCIceServerConfig,
 } from "../types.js";
@@ -259,7 +268,7 @@ export class WebRTCTransport implements RosTransport {
   async listTopics(): Promise<TopicInfo[]> {
     const result = await this.callService({
       service: "/rosapi/topics",
-      type: "rosapi/srv/Topics",
+      type: "rosapi_msgs/srv/Topics",
       args: {},
     });
     const topics = (result.values?.["topics"] as string[]) ?? [];
@@ -270,12 +279,13 @@ export class WebRTCTransport implements RosTransport {
   async listServices(): Promise<ServiceInfo[]> {
     const result = await this.callService({
       service: "/rosapi/services",
-      type: "rosapi/srv/Services",
+      type: "rosapi_msgs/srv/Services",
       args: {},
     });
     const services = (result.values?.["services"] as string[]) ?? [];
-    const types = (result.values?.["types"] as string[]) ?? [];
-    return services.map((name, i) => ({ name, type: types[i] ?? "" }));
+    return Promise.all(
+      services.map(async (name) => ({ name, type: await this.getServiceType(name) })),
+    );
   }
 
   async listActions(): Promise<ActionInfo[]> {
@@ -298,10 +308,162 @@ export class WebRTCTransport implements RosTransport {
     return actions;
   }
 
+  async listNodes(): Promise<NodeInfo[]> {
+    const result = await this.callService({
+      service: "/rosapi/nodes",
+      type: "rosapi_msgs/srv/Nodes",
+      args: {},
+    });
+    return stringArray(result.values?.["nodes"]).map((name) => ({ name }));
+  }
+
+  async getNodeInfo(node: string): Promise<NodeDetails> {
+    const result = await this.callService({
+      service: "/rosapi/node_details",
+      type: "rosapi_msgs/srv/NodeDetails",
+      args: { node },
+    });
+    return {
+      name: node,
+      subscribing: stringArray(result.values?.["subscribing"]),
+      publishing: stringArray(result.values?.["publishing"]),
+      services: stringArray(result.values?.["services"]),
+    };
+  }
+
+  async getTopicInfo(topic: string): Promise<TopicDetails> {
+    const [typeResult, publishersResult, subscribersResult] = await Promise.all([
+      this.callService({
+        service: "/rosapi/topic_type",
+        type: "rosapi_msgs/srv/TopicType",
+        args: { topic },
+      }),
+      this.callService({
+        service: "/rosapi/publishers",
+        type: "rosapi_msgs/srv/Publishers",
+        args: { topic },
+      }),
+      this.callService({
+        service: "/rosapi/subscribers",
+        type: "rosapi_msgs/srv/Subscribers",
+        args: { topic },
+      }),
+    ]);
+    const publishers = stringArray(publishersResult.values?.["publishers"]);
+    const subscribers = stringArray(subscribersResult.values?.["subscribers"]);
+    return {
+      name: topic,
+      type: stringValue(typeResult.values?.["type"]),
+      publishers,
+      subscribers,
+      publisherCount: publishers.length,
+      subscriberCount: subscribers.length,
+      qosAvailable: false,
+      qosProfiles: [],
+    };
+  }
+
+  async getServiceInfo(service: string): Promise<ServiceDetails> {
+    const [type, nodeResult] = await Promise.all([
+      this.getServiceType(service),
+      this.callService({
+        service: "/rosapi/service_node",
+        type: "rosapi_msgs/srv/ServiceNode",
+        args: { service },
+      }),
+    ]);
+    const provider = stringValue(nodeResult.values?.["node"]);
+    const providers = provider ? [provider] : [];
+    return {
+      name: service,
+      type,
+      providers,
+      providerCount: providers.length,
+    };
+  }
+
+  async getActionInfo(action: string): Promise<ActionDetails> {
+    const result = await this.callService({
+      service: "/rosapi/action_type",
+      type: "rosapi_msgs/srv/ActionType",
+      args: { action },
+    });
+    const type = stringValue(result.values?.["type"]);
+    return {
+      name: action,
+      type,
+      servers: type ? [action] : [],
+    };
+  }
+
+  async getMessageSchema(type: string): Promise<MessageSchema> {
+    const result = await this.callService({
+      service: "/rosapi/message_details",
+      type: "rosapi_msgs/srv/MessageDetails",
+      args: { type },
+    });
+    return { type, typedefs: typeDefs(result.values?.["typedefs"]) };
+  }
+
+  async getServiceSchema(type: string): Promise<ServiceSchema> {
+    const [requestResult, responseResult] = await Promise.all([
+      this.callService({
+        service: "/rosapi/service_request_details",
+        type: "rosapi_msgs/srv/ServiceRequestDetails",
+        args: { type },
+      }),
+      this.callService({
+        service: "/rosapi/service_response_details",
+        type: "rosapi_msgs/srv/ServiceResponseDetails",
+        args: { type },
+      }),
+    ]);
+    return {
+      type,
+      request: typeDefs(requestResult.values?.["typedefs"]),
+      response: typeDefs(responseResult.values?.["typedefs"]),
+    };
+  }
+
+  async getActionSchema(type: string): Promise<ActionSchema> {
+    const [goalResult, resultResult, feedbackResult] = await Promise.all([
+      this.callService({
+        service: "/rosapi/action_goal_details",
+        type: "rosapi_msgs/srv/ActionGoalDetails",
+        args: { type },
+      }),
+      this.callService({
+        service: "/rosapi/action_result_details",
+        type: "rosapi_msgs/srv/ActionResultDetails",
+        args: { type },
+      }),
+      this.callService({
+        service: "/rosapi/action_feedback_details",
+        type: "rosapi_msgs/srv/ActionFeedbackDetails",
+        args: { type },
+      }),
+    ]);
+    return {
+      type,
+      goal: typeDefs(goalResult.values?.["typedefs"]),
+      result: typeDefs(resultResult.values?.["typedefs"]),
+      feedback: typeDefs(feedbackResult.values?.["typedefs"]),
+    };
+  }
+
   // --- Private helpers ---
 
   private nextId(prefix = "rosclaw"): string {
     return `${prefix}_${++this.idCounter}`;
+  }
+
+  private async getServiceType(service: string): Promise<string> {
+    const result = await this.callService({
+      service: "/rosapi/service_type",
+      type: "rosapi_msgs/srv/ServiceType",
+      args: { service },
+    });
+    return stringValue(result.values?.["type"]);
   }
 
   private setStatus(status: ConnectionStatus): void {
@@ -513,4 +675,50 @@ export class WebRTCTransport implements RosTransport {
     }
     this.pendingRequests.clear();
   }
+}
+
+function stringValue(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
+}
+
+function typeDefs(value: unknown): RosTypeDef[] {
+  return Array.isArray(value)
+    ? value.filter(isTypeDef).map((item) => ({
+        type: item.type,
+        fieldnames: item.fieldnames,
+        fieldtypes: item.fieldtypes,
+        fieldarraylen: item.fieldarraylen,
+        examples: item.examples,
+        constnames: item.constnames,
+        constvalues: item.constvalues,
+      }))
+    : [];
+}
+
+function isTypeDef(value: unknown): value is RosTypeDef {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate["type"] === "string" &&
+    isStringArray(candidate["fieldnames"]) &&
+    isStringArray(candidate["fieldtypes"]) &&
+    isNumberArray(candidate["fieldarraylen"]) &&
+    isStringArray(candidate["examples"]) &&
+    isStringArray(candidate["constnames"]) &&
+    isStringArray(candidate["constvalues"])
+  );
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function isNumberArray(value: unknown): value is number[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "number");
 }
